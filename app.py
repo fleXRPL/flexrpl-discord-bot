@@ -6,6 +6,35 @@ from src.bot.events import setup_events
 from src.bot.commands import setup_commands
 from src.handlers.github_webhook import router as github_router
 from config import config
+from flask import Flask, request, jsonify
+from discord_interactions import verify_key_decorator
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
+
+@app.route('/discord-interaction', methods=['POST'])
+@verify_key_decorator(os.getenv('DISCORD_PUBLIC_KEY'))
+def discord_interaction():
+    interaction = request.json
+    
+    if interaction["type"] == 1:  # PING
+        return jsonify({
+            "type": 1  # PONG
+        })
+    
+    return jsonify({
+        "type": 4,  # CHANNEL_MESSAGE_WITH_SOURCE
+        "data": {
+            "content": "Command received!"
+        }
+    })
 
 # Configure logging
 logging.basicConfig(
