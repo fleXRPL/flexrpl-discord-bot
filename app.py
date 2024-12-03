@@ -16,8 +16,9 @@ load_dotenv()
 app = Flask(__name__)
 
 @app.route('/')
-def home():
-    return "Bot is running!"
+def health_check():
+    """Health check endpoint for Railway"""
+    return jsonify({"status": "healthy", "message": "Discord bot is running"}), 200
 
 @app.route('/discord-interaction', methods=['POST'])
 @verify_key_decorator(os.getenv('DISCORD_PUBLIC_KEY'))
