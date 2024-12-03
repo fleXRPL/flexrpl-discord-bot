@@ -1,0 +1,9 @@
+# Default owners for everything in the repo
+* @garotm
+
+# Bot-specific code
+/src/bot/ @garotm
+
+# Infrastructure and deployment
+/.github/workflows/ @garotm
+/Dockerfile @garotm 
