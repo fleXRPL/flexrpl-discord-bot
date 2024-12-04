@@ -14,6 +14,7 @@ import nacl.exceptions
 from fastapi import HTTPException
 import discord
 from fastapi.middleware.cors import CORSMiddleware
+import json
 
 load_dotenv()
 
@@ -29,17 +30,17 @@ app = FastAPI(
     title="Discord Bot API",
     description="Discord bot for GitHub notifications",
     version="1.0.0",
-    docs_url=None if os.getenv('ENVIRONMENT') == 'production' else "/docs",
-    redoc_url=None if os.getenv('ENVIRONMENT') == 'production' else "/redoc",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 # Add CORS middleware if needed
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["POST"],
+    allow_headers=["X-Signature-Ed25519", "X-Signature-Timestamp"],
 )
 
 # Initialize Discord bot
@@ -76,6 +77,13 @@ def verify_intents(intents: discord.Intents) -> None:
             "Please enable them in Discord Developer Portal > Bot settings."
         )
 
+# Initialize the verify key once at startup
+verify_key = None
+try:
+    verify_key = nacl.signing.VerifyKey(bytes.fromhex(config.DISCORD_PUBLIC_KEY))
+except Exception as e:
+    logger.error(f"Failed to initialize Discord verify key: {e}")
+
 @app.get("/")
 async def health_check():
     """Health check endpoint for Railway"""
@@ -89,41 +97,66 @@ async def health_check():
 
 @app.post("/discord-interaction")
 async def discord_interaction(request: Request):
-    """Handle Discord interactions."""
+    """Handle Discord interactions with minimal overhead."""
     try:
-        # Get the signature and timestamp from the headers
+        # Get headers immediately
         signature = request.headers.get('X-Signature-Ed25519')
         timestamp = request.headers.get('X-Signature-Timestamp')
         
         if not signature or not timestamp:
-            raise HTTPException(status_code=401, detail="Invalid request signature")
+            return Response(
+                content=json.dumps({"error": "missing signature"}),
+                status_code=401
+            )
         
-        # Get the raw body
+        # Read body as bytes
         body = await request.body()
+        body_str = body.decode()
         
-        # Verify the signature
-        verify_key = nacl.signing.VerifyKey(bytes.fromhex(config.DISCORD_PUBLIC_KEY))
+        # Verify signature (fast fail)
         try:
-            verify_key.verify(f"{timestamp}{body.decode()}".encode(), bytes.fromhex(signature))
-        except nacl.exceptions.BadSignatureError:
-            raise HTTPException(status_code=401, detail="Invalid request signature")
+            verify_key.verify(
+                f"{timestamp}{body_str}".encode(),
+                bytes.fromhex(signature)
+            )
+        except:
+            return Response(
+                content=json.dumps({"error": "invalid signature"}),
+                status_code=401
+            )
         
-        # Parse the interaction
-        interaction = await request.json()
-        
-        # Handle PING (type 1) interactions immediately
-        if interaction.get("type") == 1:
-            return {"type": 1}  # Return PONG immediately
+        # Parse interaction type (minimal JSON parsing)
+        try:
+            interaction_type = json.loads(body_str).get("type", 0)
             
-        # Handle other interactions
-        return {"type": 4, "data": {"content": "Command received!"}}
-        
+            # Immediate response for PING
+            if interaction_type == 1:
+                return Response(
+                    content=json.dumps({"type": 1}),
+                    media_type="application/json"
+                )
+                
+            # Quick response for other types
+            return Response(
+                content=json.dumps({
+                    "type": 4,
+                    "data": {"content": "Command received!"}
+                }),
+                media_type="application/json"
+            )
+            
+        except json.JSONDecodeError:
+            return Response(
+                content=json.dumps({"error": "invalid request body"}),
+                status_code=400
+            )
+            
     except Exception as e:
-        logger.error(f"Error handling Discord interaction: {e}")
-        # Return a 401 for signature verification failures, 500 for other errors
-        if isinstance(e, HTTPException):
-            raise e
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Interaction error: {e}")
+        return Response(
+            content=json.dumps({"error": "internal error"}),
+            status_code=500
+        )
 
 @app.on_event("startup")
 async def startup_event():
@@ -162,6 +195,11 @@ async def startup_event():
 
 # Include routers
 app.include_router(github_router, prefix="/webhook", tags=["webhooks"])
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {"status": "ok"}
 
 if __name__ == "__main__":
     import uvicorn
