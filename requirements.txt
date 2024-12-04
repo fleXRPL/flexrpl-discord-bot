@@ -5,3 +5,4 @@ discord.py>=2.0.0
 python-dotenv>=0.19.0
 pydantic>=1.8.2
 aiohttp>=3.8.0
+PyNaCl>=1.4.0
