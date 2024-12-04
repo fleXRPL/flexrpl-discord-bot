@@ -10,7 +10,13 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    g++ \
+    libc-dev \
+    make \
     && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip
 
 # Copy requirements first for better caching
 COPY requirements.txt .
