@@ -29,11 +29,36 @@ app = FastAPI(title="fleXRPL Discord Bot")
 # Initialize Discord bot
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
+intents.presences = False
+intents.typing = False
+intents.dm_typing = False
+intents.dm_reactions = False
+intents.invites = False
+
 bot = commands.Bot(
     command_prefix="!",
     intents=intents,
     application_id=int(config.DISCORD_APPLICATION_ID)
 )
+
+def verify_intents(intents: discord.Intents) -> None:
+    """Verify that required intents are enabled."""
+    required_intents = {
+        'message_content': 'MESSAGE CONTENT INTENT',
+        'members': 'SERVER MEMBERS INTENT'
+    }
+    
+    missing_intents = []
+    for intent_name, portal_name in required_intents.items():
+        if not getattr(intents, intent_name):
+            missing_intents.append(portal_name)
+    
+    if missing_intents:
+        raise ConfigValidationError(
+            f"Missing required privileged intents: {', '.join(missing_intents)}. "
+            "Please enable them in Discord Developer Portal > Bot settings."
+        )
 
 @app.get("/")
 async def health_check():
@@ -93,6 +118,10 @@ async def startup_event():
         # Validate configuration first
         logger.info("Validating configuration...")
         config.validate()
+        
+        # Verify intents
+        logger.info("Verifying Discord intents...")
+        verify_intents(bot.intents)
         
         # Setup bot events and commands
         logger.info("Setting up bot events...")
