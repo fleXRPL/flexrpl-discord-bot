@@ -11,11 +11,14 @@ def format_github_event(event_type: str, payload: Dict[Any, Any]) -> str:
         
         message += f"Repository: {repo}\n"
         message += f"Branch: {ref}\n"
-        message += f"Commits:\n"
         
-        for commit in commits:
-            commit_message = commit.get("message", "").split("\n")[0]
-            message += f"• {commit_message}\n"
+        if commits:
+            message += "Commits:\n"
+            for commit in commits:
+                # Get commit message and handle newlines safely
+                commit_msg = commit.get("message", "")
+                first_line = commit_msg.partition("\n")[0]  # Safer than split
+                message += f"• {first_line}\n"
     
     elif event_type == "pull_request":
         action = payload.get("action", "unknown")
@@ -27,7 +30,7 @@ def format_github_event(event_type: str, payload: Dict[Any, Any]) -> str:
         message += f"Title: {title}\n"
         message += f"URL: {url}\n"
     
-    return message
+    return message.strip()
 
 def format_push_event(payload: Dict[Any, Any]) -> str:
     """Format push event message."""
