@@ -11,10 +11,34 @@ A Discord bot for GitHub notifications and repository management for the fleXRPL
 
 ## Prerequisites
 
-- Python 3.9+
+- Python 3.11+ (updated to match Railway.app environment)
 - Discord Developer Account
 - GitHub Organization Admin access
 - Railway.app Account
+
+## Development Setup
+
+1. Install development dependencies:
+```bash
+pip install -r requirements-dev.txt
+```
+
+2. Install pre-commit hooks:
+```bash
+pre-commit install
+```
+
+3. Run tests:
+```bash
+pytest
+```
+
+4. Run linting manually:
+```bash
+flake8 src tests
+black src tests
+isort src tests
+```
 
 ## Local Development
 
@@ -46,7 +70,7 @@ cp .env.example .env
 
 5. Run the application:
 ```bash
-python app.py
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ## Deployment on Railway.app
@@ -54,15 +78,29 @@ python app.py
 1. Fork this repository
 2. Create new project on Railway.app
 3. Connect your GitHub repository
-4. Add environment variables in Railway dashboard
+4. Add required environment variables in Railway dashboard:
+   - `DISCORD_PUBLIC_KEY`
+   - `DISCORD_APPLICATION_ID`
+   - `DISCORD_BOT_TOKEN`
+   - `DISCORD_CLIENT_ID`
+   - `GITHUB_WEBHOOK_SECRET`
+   - `PORT` (default: 8000)
 5. Deploy!
 
 ## Environment Variables
 
+Required variables:
 - `DISCORD_PUBLIC_KEY`: Your Discord application public key
+- `DISCORD_APPLICATION_ID`: Your Discord application ID
 - `DISCORD_BOT_TOKEN`: Your Discord bot token
+- `DISCORD_CLIENT_ID`: Your Discord client ID
 - `GITHUB_WEBHOOK_SECRET`: Secret for GitHub webhooks
-- `ALLOWED_CHANNELS`: Comma-separated list of allowed Discord channel IDs
+- `PORT`: Port for the application to run on (default: 8000)
+
+Optional variables:
+- `LOG_LEVEL`: Logging level (default: INFO)
+- `ALLOWED_GUILD_IDS`: Comma-separated list of allowed Discord server IDs
+- `ADMIN_USER_IDS`: Comma-separated list of Discord admin user IDs
 
 ## Contributing
 
@@ -70,4 +108,4 @@ Please read our [Contributing Guidelines](https://github.com/fleXRPL/fleXRP/blob
 
 ## License
 
-This project is licensed under the MIT License - see the (https://github.com/fleXRPL/fleXRP/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/fleXRPL/fleXRP/blob/main/LICENSE) file for details.
