@@ -1,41 +1,16 @@
 import asyncio
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 from discord.ext import commands
 from src.bot.events import setup_events
 from src.bot.commands import setup_commands
 from src.handlers.github_webhook import router as github_router
 from config import config
-from flask import Flask, request, jsonify
-from discord_interactions import verify_key_decorator
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
-
-app = Flask(__name__)
-
-@app.route('/')
-def health_check():
-    """Health check endpoint for Railway"""
-    return jsonify({"status": "healthy", "message": "Discord bot is running"}), 200
-
-@app.route('/discord-interaction', methods=['POST'])
-@verify_key_decorator(os.getenv('DISCORD_PUBLIC_KEY'))
-def discord_interaction():
-    interaction = request.json
-    
-    if interaction["type"] == 1:  # PING
-        return jsonify({
-            "type": 1  # PONG
-        })
-    
-    return jsonify({
-        "type": 4,  # CHANNEL_MESSAGE_WITH_SOURCE
-        "data": {
-            "content": "Command received!"
-        }
-    })
 
 # Configure logging
 logging.basicConfig(
@@ -49,6 +24,33 @@ app = FastAPI(title="fleXRPL Discord Bot")
 
 # Initialize Discord bot
 bot = commands.Bot(command_prefix="!")
+
+@app.get("/")
+async def health_check():
+    """Health check endpoint for Railway"""
+    return JSONResponse(
+        content={
+            "status": "healthy",
+            "message": "Discord bot is running"
+        },
+        status_code=200
+    )
+
+@app.post("/discord-interaction")
+async def discord_interaction(request: Request):
+    interaction = await request.json()
+    
+    if interaction.get("type") == 1:  # PING
+        return JSONResponse(content={"type": 1})  # PONG
+    
+    return JSONResponse(
+        content={
+            "type": 4,
+            "data": {
+                "content": "Command received!"
+            }
+        }
+    )
 
 @app.on_event("startup")
 async def startup_event():
@@ -70,4 +72,9 @@ app.include_router(github_router, prefix="/webhook", tags=["webhooks"])
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run(
+        "app:app",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8000)),
+        log_level="info"
+    ) 
