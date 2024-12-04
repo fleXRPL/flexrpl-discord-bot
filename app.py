@@ -14,10 +14,24 @@ intents.message_content = True
 
 class Bot(commands.Bot):
     def __init__(self):
+        # Define permissions for the bot
+        permissions = discord.Permissions(
+            send_messages=True,
+            send_messages_in_threads=True,
+            create_public_threads=True,
+            embed_links=True,
+            attach_files=True,
+            read_message_history=True,
+            use_slash_commands=True,
+            view_channel=True,
+            read_messages=True
+        )
+        
         super().__init__(
             command_prefix="!",
             intents=intents,
-            application_id=config.DISCORD_APPLICATION_ID
+            application_id=config.DISCORD_APPLICATION_ID,
+            permissions=permissions
         )
 
     async def setup_hook(self):
