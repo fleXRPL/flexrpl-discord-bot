@@ -16,6 +16,34 @@ A Discord bot for GitHub notifications and repository management for the fleXRPL
 - GitHub Organization Admin access
 - Railway.app Account
 
+## Repo Structure
+
+```bash
+.flexrpl-discord-bot/
+├── Dockerfile
+├── Procfile
+├── README.md
+├── app.py
+├── config.py
+├── requirements-dev.txt
+├── requirements.txt
+├── runtime.txt
+├── setup.cfg
+├── src
+│   ├── bot
+│   │   ├── __init__.py
+│   │   ├── commands.py
+│   │   └── events.py
+│   ├── handlers
+│   │   └── github_webhook.py
+│   └── utils
+│       └── formatting.py
+└── tests
+    ├── test_bot.py
+    └── test_formatting.py
+
+6 directories, 16 files
+```
 ## Development Setup
 
 1. Install development dependencies:

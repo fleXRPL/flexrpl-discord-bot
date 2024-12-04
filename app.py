@@ -6,12 +6,13 @@ from discord.ext import commands
 from src.bot.events import setup_events
 from src.bot.commands import setup_commands
 from src.handlers.github_webhook import router as github_router
-from config import config
+from config import config, ConfigValidationError
 import os
 from dotenv import load_dotenv
 import nacl.signing
 import nacl.exceptions
 from fastapi import HTTPException
+import discord
 
 load_dotenv()
 
@@ -26,7 +27,9 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="fleXRPL Discord Bot")
 
 # Initialize Discord bot
-bot = commands.Bot(command_prefix="!")
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 @app.get("/")
 async def health_check():
@@ -83,15 +86,27 @@ async def discord_interaction(request: Request):
 async def startup_event():
     """Initialize bot and start it in the background."""
     try:
+        # Validate configuration first
+        logger.info("Validating configuration...")
+        config.validate()
+        
         # Setup bot events and commands
+        logger.info("Setting up bot events...")
         setup_events(bot)
+        
+        logger.info("Setting up bot commands...")
         await setup_commands(bot)
         
         # Start bot in background
-        asyncio.create_task(bot.start(config.DISCORD_TOKEN))
+        logger.info("Starting bot...")
+        asyncio.create_task(bot.start(config.DISCORD_BOT_TOKEN))
         logger.info("Bot started successfully")
+        
+    except ConfigValidationError as e:
+        logger.critical(f"Configuration validation failed: {e}")
+        raise
     except Exception as e:
-        logger.error(f"Failed to start bot: {e}")
+        logger.critical(f"Failed to start bot: {e}")
         raise
 
 # Include routers
