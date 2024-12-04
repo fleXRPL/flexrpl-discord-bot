@@ -1,8 +1,18 @@
 # requirements.txt
-fastapi>=0.68.0
-uvicorn>=0.15.0
-discord.py>=2.0.0
-python-dotenv>=0.19.0
-pydantic>=1.8.2
-aiohttp>=3.8.0
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+discord.py>=2.3.2
+python-dotenv>=1.0.0
 PyNaCl>=1.4.0
+uvloop>=0.19.0
+httptools>=0.6.1
+aiohttp>=3.9.1
+aiodns>=3.1.1
+cchardet>=2.1.7
+orjson>=3.9.10
+prometheus-client>=0.19.0
+python-json-logger>=2.0.7
+cryptography>=41.0.5
+pydantic[email]>=2.5.2
+python-multipart>=0.0.6
+email-validator>=2.1.0.post1
