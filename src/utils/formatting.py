@@ -2,11 +2,32 @@ from typing import Dict, Any
 
 def format_github_event(event_type: str, payload: Dict[Any, Any]) -> str:
     """Format GitHub webhook event into Discord message."""
+    message = f"**{event_type}**\n"
+
     if event_type == "push":
-        return format_push_event(payload)
+        repo = payload.get("repository", {}).get("full_name", "unknown")
+        ref = payload.get("ref", "").replace("refs/heads/", "")
+        commits = payload.get("commits", [])
+        
+        message += f"Repository: {repo}\n"
+        message += f"Branch: {ref}\n"
+        message += f"Commits:\n"
+        
+        for commit in commits:
+            commit_message = commit.get("message", "").split("\n")[0]
+            message += f"• {commit_message}\n"
+    
     elif event_type == "pull_request":
-        return format_pr_event(payload)
-    return f"Received unhandled GitHub event: {event_type}"
+        action = payload.get("action", "unknown")
+        pr = payload.get("pull_request", {})
+        title = pr.get("title", "unknown")
+        url = pr.get("html_url", "#")
+        
+        message += f"Action: {action}\n"
+        message += f"Title: {title}\n"
+        message += f"URL: {url}\n"
+    
+    return message
 
 def format_push_event(payload: Dict[Any, Any]) -> str:
     """Format push event message."""
