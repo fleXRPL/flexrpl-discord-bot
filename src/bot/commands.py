@@ -22,6 +22,9 @@ async def setup_commands(bot: commands.Bot):
             )
 
         logger.info("Syncing commands...")
+        if not bot.is_ready():
+            logger.warning("Bot not ready, waiting before syncing commands...")
+            await bot.wait_until_ready()
         await bot.tree.sync()
         logger.info("Commands synced successfully")
         

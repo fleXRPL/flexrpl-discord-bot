@@ -29,7 +29,11 @@ app = FastAPI(title="fleXRPL Discord Bot")
 # Initialize Discord bot
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(
+    command_prefix="!",
+    intents=intents,
+    application_id=int(config.DISCORD_APPLICATION_ID)
+)
 
 @app.get("/")
 async def health_check():
@@ -94,17 +98,21 @@ async def startup_event():
         logger.info("Setting up bot events...")
         setup_events(bot)
         
+        # Start bot first
+        logger.info("Starting bot...")
+        await bot.start(config.DISCORD_BOT_TOKEN)
+        
+        # Wait for bot to be ready
+        logger.info("Waiting for bot to be ready...")
+        while not bot.is_ready():
+            await asyncio.sleep(0.1)
+            
+        # Now setup commands
         logger.info("Setting up bot commands...")
         await setup_commands(bot)
         
-        # Start bot in background
-        logger.info("Starting bot...")
-        asyncio.create_task(bot.start(config.DISCORD_BOT_TOKEN))
         logger.info("Bot started successfully")
         
-    except ConfigValidationError as e:
-        logger.critical(f"Configuration validation failed: {e}")
-        raise
     except Exception as e:
         logger.critical(f"Failed to start bot: {e}")
         raise
