@@ -1,36 +1,40 @@
 from typing import Dict, Any
 
-def format_github_event(event_type: str, payload: Dict[Any, Any]) -> str:
-    """Format GitHub webhook event into Discord message."""
-    message = f"**{event_type}**\n"
+def format_commit_message(message: str) -> str:
+    """Format a commit message by taking only the first line."""
+    lines = message.split('\n')
+    return lines[0] if lines else ''
+
+def format_github_event(event_type: str, payload: dict) -> str:
+    """Format GitHub webhook event into a Discord message."""
+    parts = [f"**{event_type}**"]
 
     if event_type == "push":
-        repo = payload.get("repository", {}).get("full_name", "unknown")
-        ref = payload.get("ref", "").replace("refs/heads/", "")
-        commits = payload.get("commits", [])
+        repo = payload.get('repository', {}).get('full_name', 'unknown')
+        ref = payload.get('ref', '')
+        branch = ref.replace('refs/heads/', '') if ref else 'unknown'
+        commits = payload.get('commits', [])
         
-        message += f"Repository: {repo}\n"
-        message += f"Branch: {ref}\n"
+        parts.append(f"Repository: {repo}")
+        parts.append(f"Branch: {branch}")
         
         if commits:
-            message += "Commits:\n"
+            parts.append("Commits:")
             for commit in commits:
-                # Get commit message and handle newlines safely
-                commit_msg = commit.get("message", "")
-                first_line = commit_msg.partition("\n")[0]  # Safer than split
-                message += f"• {first_line}\n"
+                message = format_commit_message(commit.get('message', ''))
+                parts.append(f"• {message}")
     
     elif event_type == "pull_request":
-        action = payload.get("action", "unknown")
-        pr = payload.get("pull_request", {})
-        title = pr.get("title", "unknown")
-        url = pr.get("html_url", "#")
+        action = payload.get('action', 'unknown')
+        pr = payload.get('pull_request', {})
+        title = pr.get('title', 'unknown')
+        url = pr.get('html_url', '#')
         
-        message += f"Action: {action}\n"
-        message += f"Title: {title}\n"
-        message += f"URL: {url}\n"
+        parts.append(f"Action: {action}")
+        parts.append(f"Title: {title}")
+        parts.append(f"URL: {url}")
     
-    return message.strip()
+    return '\n'.join(parts)
 
 def format_push_event(payload: Dict[Any, Any]) -> str:
     """Format push event message."""
