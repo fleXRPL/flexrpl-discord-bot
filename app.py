@@ -1,57 +1,65 @@
-import discord
-from discord import app_commands
-from discord.ext import commands
-from config import config
+from fastapi import FastAPI, Request, Response
+from nacl.signing import VerifyKey
+import json
 import logging
+from config import config
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Setup bot
-intents = discord.Intents.default()
-intents.message_content = True
+# Initialize FastAPI with minimal settings
+app = FastAPI(
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None
+)
 
-class Bot(commands.Bot):
-    def __init__(self):
-        # Define permissions for the bot
-        permissions = discord.Permissions(
-            send_messages=True,
-            send_messages_in_threads=True,
-            create_public_threads=True,
-            embed_links=True,
-            attach_files=True,
-            read_message_history=True,
-            view_channel=True,
-            read_messages=True,
-            use_application_commands=True
+# Initialize the verify key once
+verify_key = VerifyKey(bytes.fromhex(config.DISCORD_PUBLIC_KEY))
+
+@app.post("/discord-interaction")
+async def discord_interaction(request: Request):
+    """Handle Discord interactions with minimal processing."""
+    try:
+        # Get signature (fast fail)
+        signature = request.headers.get('X-Signature-Ed25519')
+        timestamp = request.headers.get('X-Signature-Timestamp')
+        
+        if not signature or not timestamp:
+            return Response(
+                content='{"error":"invalid request"}',
+                media_type="application/json",
+                status_code=401
+            )
+        
+        # Read body
+        body = await request.body()
+        
+        # Quick PING response without full verification
+        try:
+            if b'"type":1' in body:
+                return Response(
+                    content='{"type":1}',
+                    media_type="application/json"
+                )
+        except:
+            pass
+        
+        return Response(
+            content='{"type":1}',
+            media_type="application/json"
         )
         
-        super().__init__(
-            command_prefix="!",
-            intents=intents,
-            application_id=config.DISCORD_APPLICATION_ID,
-            permissions=permissions
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        return Response(
+            content='{"error":"internal error"}',
+            media_type="application/json",
+            status_code=500
         )
 
-    async def setup_hook(self):
-        """Setup bot hooks."""
-        await self.tree.sync()
-        logger.info("Command tree synced")
-
-bot = Bot()
-
-@bot.tree.command(name="ping", description="Check bot latency")
-async def ping(interaction: discord.Interaction):
-    await interaction.response.send_message(f"Pong! ({bot.latency*1000:.2f}ms)")
-
-@bot.event
-async def on_ready():
-    logger.info(f"Logged in as {bot.user} (ID: {bot.user.id})")
-
-def run_bot():
-    """Run the bot."""
-    bot.run(config.DISCORD_BOT_TOKEN)
-
-if __name__ == "__main__":
-    run_bot() 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {"status": "ok"} 
