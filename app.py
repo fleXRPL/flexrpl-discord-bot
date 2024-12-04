@@ -22,9 +22,9 @@ class Bot(commands.Bot):
             embed_links=True,
             attach_files=True,
             read_message_history=True,
-            use_slash_commands=True,
             view_channel=True,
-            read_messages=True
+            read_messages=True,
+            use_application_commands=True
         )
         
         super().__init__(
