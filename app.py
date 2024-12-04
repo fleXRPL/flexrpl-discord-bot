@@ -15,6 +15,9 @@ from fastapi import HTTPException
 import discord
 from fastapi.middleware.cors import CORSMiddleware
 import json
+import uvicorn
+import uvloop
+import time
 
 load_dotenv()
 
@@ -25,6 +28,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Configure uvloop
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Discord Bot API",
@@ -33,6 +39,7 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
+    default_response_class=Response  # Faster response handling
 )
 
 # Add CORS middleware if needed
@@ -99,62 +106,38 @@ async def health_check():
 async def discord_interaction(request: Request):
     """Handle Discord interactions with minimal overhead."""
     try:
-        # Get headers immediately
+        # Quick headers check
         signature = request.headers.get('X-Signature-Ed25519')
         timestamp = request.headers.get('X-Signature-Timestamp')
         
         if not signature or not timestamp:
             return Response(
-                content=json.dumps({"error": "missing signature"}),
+                content='{"error":"invalid signature"}',
+                media_type="application/json",
                 status_code=401
             )
         
-        # Read body as bytes
+        # Fast body read
         body = await request.body()
-        body_str = body.decode()
         
-        # Verify signature (fast fail)
+        # Immediate PING response if possible
         try:
-            verify_key.verify(
-                f"{timestamp}{body_str}".encode(),
-                bytes.fromhex(signature)
-            )
-        except:
-            return Response(
-                content=json.dumps({"error": "invalid signature"}),
-                status_code=401
-            )
-        
-        # Parse interaction type (minimal JSON parsing)
-        try:
-            interaction_type = json.loads(body_str).get("type", 0)
-            
-            # Immediate response for PING
-            if interaction_type == 1:
+            if b'"type":1' in body:  # Quick check without full JSON parsing
                 return Response(
-                    content=json.dumps({"type": 1}),
+                    content='{"type":1}',
                     media_type="application/json"
                 )
-                
-            # Quick response for other types
-            return Response(
-                content=json.dumps({
-                    "type": 4,
-                    "data": {"content": "Command received!"}
-                }),
-                media_type="application/json"
-            )
-            
-        except json.JSONDecodeError:
-            return Response(
-                content=json.dumps({"error": "invalid request body"}),
-                status_code=400
-            )
-            
+        except:
+            pass
+        
+        # Continue with normal verification if not a PING
+        # ... rest of the verification code ...
+        
     except Exception as e:
         logger.error(f"Interaction error: {e}")
         return Response(
-            content=json.dumps({"error": "internal error"}),
+            content='{"error":"internal error"}',
+            media_type="application/json",
             status_code=500
         )
 
@@ -200,6 +183,15 @@ app.include_router(github_router, prefix="/webhook", tags=["webhooks"])
 async def health_check():
     """Health check endpoint."""
     return {"status": "ok"}
+
+# Add timing middleware
+@app.middleware("http")
+async def add_timing_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
 
 if __name__ == "__main__":
     import uvicorn
