@@ -36,20 +36,41 @@ async def discord_interaction(request: Request):
         # Read body
         body = await request.body()
         
-        # Quick PING response without full verification
+        # Verify the request
         try:
-            if b'"type":1' in body:
-                return Response(
-                    content='{"type":1}',
-                    media_type="application/json"
-                )
-        except:
-            pass
+            verify_key.verify(
+                (timestamp + body.decode()).encode(),
+                bytes.fromhex(signature)
+            )
+        except Exception as e:
+            logger.error(f"Verification failed: {e}")
+            return Response(
+                content='{"error":"invalid signature"}',
+                media_type="application/json",
+                status_code=401
+            )
         
-        return Response(
-            content='{"type":1}',
-            media_type="application/json"
-        )
+        # Handle PING
+        if b'"type":1' in body:
+            return Response(
+                content='{"type":1}',
+                media_type="application/json"
+            )
+        
+        # Parse the request body for other interaction types
+        try:
+            request_data = json.loads(body)
+            # Handle other interaction types here
+            return Response(
+                content='{"type":1}',
+                media_type="application/json"
+            )
+        except json.JSONDecodeError:
+            return Response(
+                content='{"error":"invalid json"}',
+                media_type="application/json",
+                status_code=400
+            )
         
     except Exception as e:
         logger.error(f"Error: {e}")
