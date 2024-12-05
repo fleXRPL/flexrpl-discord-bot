@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import time
 
 import uvicorn
 from discord.interactions import InteractionType
@@ -19,6 +20,21 @@ bot = FlexRPLBot()
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Add rate limiting control
+last_sync_time = 0
+SYNC_COOLDOWN = 60  # seconds between syncs
+
+
+async def should_sync_commands():
+    """Control command syncing across replicas"""
+    global last_sync_time
+    current_time = time.time()
+
+    if current_time - last_sync_time >= SYNC_COOLDOWN:
+        last_sync_time = current_time
+        return True
+    return False
 
 
 async def start_bot():
@@ -51,33 +67,58 @@ async def verify_discord_interaction(request: Request):
 async def handle_discord_interaction(request: Request):
     """Handle Discord interactions with proper verification."""
     try:
-        # Verify the interaction first
-        interaction = await verify_discord_interaction(request)
+        # Get the request body
+        body = await request.json()
 
-        # Immediately acknowledge the interaction
-        await interaction.response.defer()
+        # Handle PING
+        if body["type"] == InteractionType.ping.value:
+            return {"type": InteractionType.pong.value}
 
-        # Then process the command
-        if interaction.type == InteractionType.application_command:
-            command_name = interaction.data["name"]
+        # Handle commands
+        if body["type"] == InteractionType.application_command.value:
+            command_name = body["data"]["name"]
+
+            # Immediate response
+            response_data = {
+                "type": InteractionType.channel_message.value,
+                "data": {"content": "Processing command..."},
+            }
 
             if command_name == "ping":
-                await interaction.followup.send("Pong!")
+                response_data["data"]["content"] = "Pong!"
             elif command_name == "githubsub":
-                await interaction.followup.send("Subscription command received")
+                response_data["data"]["content"] = "Subscription command received"
             elif command_name == "help":
-                await interaction.followup.send(
-                    "Available commands:\n- /ping: Check bot latency\n"
+                response_data["data"]["content"] = (
+                    "Available commands:\n"
+                    "- /ping: Check bot latency\n"
                     "- /githubsub: Subscribe to GitHub notifications\n"
                     "- /help: Show this message"
                 )
 
+            return response_data
+
     except Exception as e:
         logger.error(f"Error handling interaction: {e}")
-        return {"type": 1}
+        return {
+            "type": InteractionType.channel_message.value,
+            "data": {"content": "An error occurred processing your command."},
+        }
 
-    return {"type": 1}
 
+async def startup_event():
+    """Handle startup tasks with rate limiting"""
+    if await should_sync_commands():
+        try:
+            # Sync commands here
+            await bot.sync_commands()
+            logger.info("Commands synced successfully")
+        except Exception as e:
+            logger.error(f"Failed to sync commands: {e}")
+
+
+# Register startup event
+app.add_event_handler("startup", startup_event)
 
 if __name__ == "__main__":
     asyncio.run(run_all())
