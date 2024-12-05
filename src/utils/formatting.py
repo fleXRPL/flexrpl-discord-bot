@@ -1,4 +1,5 @@
 import logging
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ def format_issue_message(payload: dict) -> str:
     )
 
 
-def format_github_event(event_type: str, payload: dict) -> str:
+def format_github_event(event_type: str, payload: Dict[str, Any]) -> str:
     """Format GitHub event for Discord message."""
     if event_type == 'pull_request':
         return format_pull_request_message(payload)
