@@ -18,10 +18,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install -r requirements.txt
         pip install -r requirements-dev.txt
     - name: Run tests
       run: |
-        pytest tests/ --cov=src
+        PYTHONPATH=$PYTHONPATH:$(pwd) pytest tests/ --cov=src
     - name: Run linting
       run: |
         flake8 src/
@@ -34,10 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    
     - name: Install Railway CLI
       run: npm install -g @railway/cli
-    
     - name: Deploy to Railway
       run: railway up
       env:

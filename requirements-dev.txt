@@ -6,33 +6,7 @@ pytest-mock>=3.12.0
 aioresponses>=0.7.4
 coverage>=7.3.2
 
-# Linting and formatting
-flake8>=6.1.0
-black>=23.11.0
-isort>=5.12.0
-mypy>=1.7.1
-pylint>=3.0.2
-
-# Type checking
-types-aiofiles>=23.2.0.0
-types-PyYAML>=6.0.12.12
-types-requests>=2.31.0.10
-
-# Development tools
-pre-commit>=3.5.0
-aiohttp-devtools>=1.1.0
-watchfiles>=0.21.0
-
-# Debug and profiling
-line-profiler>=4.1.1
-memory-profiler>=0.61.0
-snakeviz>=2.2.0
-
-# Documentation
-mkdocs>=1.5.3
-mkdocs-material>=9.4.14
-mkdocstrings>=0.24.0
-
 # Application dependencies for testing
+discord.py>=2.3.2
 fastapi>=0.104.1
 pynacl>=1.5.0
