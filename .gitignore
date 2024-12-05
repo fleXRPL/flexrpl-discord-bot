@@ -114,3 +114,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# Accidental pip version files
+=*.*

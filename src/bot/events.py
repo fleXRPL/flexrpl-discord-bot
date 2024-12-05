@@ -1,6 +1,7 @@
 import logging
-from discord.ext import commands
+
 import discord
+from discord.ext import commands
 
 logger = logging.getLogger(__name__)
 
@@ -10,15 +11,11 @@ def setup_events(bot: commands.Bot):
 
     @bot.event
     async def on_guild_join(guild: discord.Guild):
-        logger.info(
-            f"Bot has been added to guild: {guild.name} (ID: {guild.id})"
-        )
+        logger.info(f"Bot has been added to guild: {guild.name} (ID: {guild.id})")
 
     @bot.event
     async def on_guild_remove(guild: discord.Guild):
-        logger.info(
-            f"Bot has been removed from guild: {guild.name} (ID: {guild.id})"
-        )
+        logger.info(f"Bot has been removed from guild: {guild.name} (ID: {guild.id})")
 
     @bot.event
     async def on_command_error(ctx, error):

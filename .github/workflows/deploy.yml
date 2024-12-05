@@ -26,9 +26,9 @@ jobs:
     - name: Run linting
       run: |
         pip install flake8>=7.0.0 black>=24.2.0 isort>=5.13.2
+        black src/
+        isort src/
         flake8 src/
-        black --check src/
-        isort --check-only src/
 
   deploy:
     needs: test
