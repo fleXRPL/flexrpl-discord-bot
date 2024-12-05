@@ -13,6 +13,7 @@ security = HTTPBearer()
 
 logger = logging.getLogger(__name__)
 
+
 async def verify_signature(request: Request):
     """Verify GitHub webhook signature."""
     signature = request.headers.get("X-Hub-Signature-256")
@@ -30,6 +31,7 @@ async def verify_signature(request: Request):
     if not hmac.compare_digest(signature, expected_signature):
         raise HTTPException(status_code=401, detail="Invalid signature")
 
+
 async def send_discord_webhook(webhook_url: str, content: str):
     """Send a message to Discord via webhook."""
     try:
@@ -46,6 +48,7 @@ async def send_discord_webhook(webhook_url: str, content: str):
             status_code=500,
             detail="Failed to send webhook to Discord"
         )
+
 
 async def handle_github_webhook(event_type: str, payload: dict):
     """Handle incoming GitHub webhook events."""
@@ -70,8 +73,8 @@ async def github_webhook(
     await verify_signature(request)
     event_type = request.headers.get("X-GitHub-Event")
     payload = await request.json()
-    
+
     await handle_github_webhook(event_type, payload)
     # TODO: Send formatted message to Discord channel
-    
+
     return {"status": "success"}
