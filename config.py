@@ -47,7 +47,7 @@ class Config:
             'preview': public_key[:4] if public_key else 'empty',
             'is_hex': bool(re.match('^[0-9a-fA-F]+$', public_key)) if public_key else False
         }
-        
+
         logger.debug(f"Public Key Debug Info: {debug_info}")
 
         # Required variables and their validation rules

@@ -22,11 +22,11 @@ async def test_bot_setup_hook():
     bot._ready = MagicMock()
     bot._ready.wait = AsyncMock()
     bot.wait_until_ready = AsyncMock()
-    
+
     with patch('src.bot.bot.setup_commands', new_callable=AsyncMock) as mock_setup_commands:
         with patch('src.bot.bot.setup_events') as mock_setup_events:
             await bot.setup_hook()
-            
+
             mock_setup_commands.assert_called_once_with(bot)
             mock_setup_events.assert_called_once_with(bot)
             bot.tree.sync.assert_called_once()

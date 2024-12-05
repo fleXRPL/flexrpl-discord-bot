@@ -25,17 +25,17 @@ async def discord_interaction(request: Request):
         # Get signature (fast fail)
         signature = request.headers.get('X-Signature-Ed25519')
         timestamp = request.headers.get('X-Signature-Timestamp')
-        
+
         if not signature or not timestamp:
             return Response(
                 content='{"error":"invalid request"}',
                 media_type="application/json",
                 status_code=401
             )
-        
+
         # Read body
         body = await request.body()
-        
+
         # Verify the request
         try:
             verify_key.verify(
@@ -49,14 +49,14 @@ async def discord_interaction(request: Request):
                 media_type="application/json",
                 status_code=401
             )
-        
+
         # Handle PING
         if b'"type":1' in body:
             return Response(
                 content='{"type":1}',
                 media_type="application/json"
             )
-        
+
         # Parse the request body for other interaction types
         try:
             request_data = json.loads(body)
@@ -71,7 +71,7 @@ async def discord_interaction(request: Request):
                 media_type="application/json",
                 status_code=400
             )
-        
+
     except Exception as e:
         logger.error(f"Error: {e}")
         return Response(

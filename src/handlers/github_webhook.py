@@ -53,16 +53,16 @@ async def send_discord_webhook(webhook_url: str, content: str):
 async def handle_github_webhook(event_type: str, payload: dict):
     """Handle incoming GitHub webhook events."""
     try:
-        # Format the message based on the event type and payload
-        formatted_message = format_github_event(event_type, payload)
         # TODO: Implement webhook URL configuration and sending
         logger.info(f"Processed GitHub webhook event: {event_type}")
+        return format_github_event(event_type, payload)
     except Exception as e:
         logger.error(f"Error processing GitHub webhook: {e}")
         raise HTTPException(
             status_code=500,
             detail="Failed to process GitHub webhook"
         )
+
 
 @router.post("/github")
 async def github_webhook(

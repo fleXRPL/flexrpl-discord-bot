@@ -59,7 +59,7 @@ def format_pr_event(payload: Dict[Any, Any]) -> str:
     """Format pull request event message."""
     action = payload.get("action", "unknown")
     pr = payload.get("pull_request", {})
-    
+
     return (
         f"🔍 Pull Request {action}: {pr.get('title')}\n"
         f"Repository: {payload.get('repository', {}).get('full_name')}\n"
