@@ -70,7 +70,7 @@ async def handle_discord_interaction(request: Request):
         # Get the request body
         body = await request.json()
 
-        # Handle PING
+        # Handle PING (required for Discord verification)
         if body["type"] == InteractionType.ping.value:
             return {"type": InteractionType.pong.value}
 
@@ -80,7 +80,7 @@ async def handle_discord_interaction(request: Request):
 
             # Immediate response
             response_data = {
-                "type": InteractionType.channel_message.value,
+                "type": 4,  # InteractionResponseType.channel_message.value
                 "data": {"content": "Processing command..."},
             }
 
@@ -101,7 +101,7 @@ async def handle_discord_interaction(request: Request):
     except Exception as e:
         logger.error(f"Error handling interaction: {e}")
         return {
-            "type": InteractionType.channel_message.value,
+            "type": 4,  # InteractionResponseType.channel_message.value
             "data": {"content": "An error occurred processing your command."},
         }
 
@@ -119,6 +119,13 @@ async def startup_event():
 
 # Register startup event
 app.add_event_handler("startup", startup_event)
+
+
+@app.get("/")
+async def root():
+    """Health check endpoint"""
+    return {"status": "ok", "message": "Discord bot is running"}
+
 
 if __name__ == "__main__":
     asyncio.run(run_all())
