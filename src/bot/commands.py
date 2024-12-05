@@ -32,14 +32,21 @@ async def setup_commands(bot: commands.Bot):
 
         @bot.tree.command(name="ping", description="Check bot latency")
         async def ping(interaction: discord.Interaction):
+            """Handle ping command."""
             try:
-                await interaction.response.send_message(
-                    f"Pong! ({bot.latency*1000:.2f}ms)", ephemeral=True
+                # Defer the response to avoid timeout
+                await interaction.response.defer(ephemeral=True)
+
+                # Send the actual response
+                await interaction.followup.send(
+                    f"Pong! ({bot.latency*1000:.2f}ms)",
+                    ephemeral=True
                 )
             except Exception as e:
                 logger.error(f"Error in ping command: {e}")
                 await interaction.followup.send(
-                    "An error occurred while checking latency.", ephemeral=True
+                    "An error occurred while checking latency.",
+                    ephemeral=True
                 )
 
         @bot.tree.command(name="help", description="Show available commands")
