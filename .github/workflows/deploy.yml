@@ -25,6 +25,7 @@ jobs:
         PYTHONPATH=$PYTHONPATH:$(pwd) pytest tests/ --cov=src
     - name: Run linting
       run: |
+        pip install flake8>=7.0.0 black>=24.2.0 isort>=5.13.2
         flake8 src/
         black --check src/
         isort --check-only src/
