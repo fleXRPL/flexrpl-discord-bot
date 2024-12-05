@@ -1,20 +1,21 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import logging
 import os
 from .commands import setup_commands
+from .events import setup_events
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Configure intents
-intents = discord.Intents.default()
-intents.message_content = True
-intents.guilds = True
-
 class FlexRPLBot(commands.Bot):
     def __init__(self):
+        intents = discord.Intents.default()
+        intents.message_content = True
+        intents.guilds = True
+        
         super().__init__(
             command_prefix="!",
             intents=intents,
@@ -25,7 +26,9 @@ class FlexRPLBot(commands.Bot):
         """Setup hook that runs before the bot starts."""
         try:
             await setup_commands(self)
-            logger.info("Bot commands setup completed")
+            setup_events(self)
+            await self.tree.sync()
+            logger.info("Bot commands synced successfully")
         except Exception as e:
             logger.error(f"Error in setup hook: {e}")
             raise
@@ -37,13 +40,6 @@ class FlexRPLBot(commands.Bot):
         logger.info("Registered commands:")
         for cmd in self.tree.get_commands():
             logger.info(f"- /{cmd.name}: {cmd.description}")
-
-    async def on_error(self, event_method: str, *args, **kwargs):
-        """Global error handler for the bot."""
-        logger.error(f"Error in {event_method}: ", exc_info=True)
-
-# Create bot instance
-bot = FlexRPLBot()
 
 # Error handling for command errors
 @bot.tree.error
