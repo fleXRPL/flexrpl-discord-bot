@@ -1,40 +1,58 @@
-from typing import Dict, Any
+import logging
 
-def format_commit_message(message: str) -> str:
-    """Format a commit message by taking only the first line."""
-    lines = message.split('\n')
-    return lines[0] if lines else ''
+logger = logging.getLogger(__name__)
+
+
+def format_commit_message(commit: dict) -> str:
+    """Format a commit message for Discord."""
+    author = commit.get('author', {}).get('name', 'Unknown')
+    message = commit.get('message', 'No message provided')
+    url = commit.get('url', '')
+    return f"• {author}: {message}\n  {url}"
+
+
+def format_pull_request_message(payload: dict) -> str:
+    """Format a pull request message for Discord."""
+    action = payload.get('action', 'unknown')
+    pr = payload.get('pull_request', {})
+    title = pr.get('title', 'No title')
+    number = pr.get('number', '0')
+    url = pr.get('html_url', '')
+    user = pr.get('user', {}).get('login', 'Unknown')
+
+    return (
+        f"Pull Request #{number} {action} by {user}\n"
+        f"Title: {title}\n"
+        f"URL: {url}"
+    )
+
+
+def format_issue_message(payload: dict) -> str:
+    """Format an issue message for Discord."""
+    action = payload.get('action', 'unknown')
+    issue = payload.get('issue', {})
+    title = issue.get('title', 'No title')
+    number = issue.get('number', '0')
+    url = issue.get('html_url', '')
+    user = issue.get('user', {}).get('login', 'Unknown')
+
+    return (
+        f"Issue #{number} {action} by {user}\n"
+        f"Title: {title}\n"
+        f"URL: {url}"
+    )
+
 
 def format_github_event(event_type: str, payload: dict) -> str:
-    """Format GitHub webhook event into a Discord message."""
-    parts = [f"**{event_type}**"]
+    """Format GitHub event for Discord message."""
+    if event_type == 'pull_request':
+        return format_pull_request_message(payload)
+    elif event_type == 'issues':
+        return format_issue_message(payload)
+    else:
+        logger.warning(f"Unsupported event type: {event_type}")
+        return f"Received {event_type} event"
 
-    if event_type == "push":
-        repo = payload.get('repository', {}).get('full_name', 'unknown')
-        ref = payload.get('ref', '')
-        branch = ref.replace('refs/heads/', '') if ref else 'unknown'
-        commits = payload.get('commits', [])
-        
-        parts.append(f"Repository: {repo}")
-        parts.append(f"Branch: {branch}")
-        
-        if commits:
-            parts.append("Commits:")
-            for commit in commits:
-                message = format_commit_message(commit.get('message', ''))
-                parts.append(f"• {message}")
-    
-    elif event_type == "pull_request":
-        action = payload.get('action', 'unknown')
-        pr = payload.get('pull_request', {})
-        title = pr.get('title', 'unknown')
-        url = pr.get('html_url', '#')
-        
-        parts.append(f"Action: {action}")
-        parts.append(f"Title: {title}")
-        parts.append(f"URL: {url}")
-    
-    return '\n'.join(parts)
 
 def format_pr_event(payload: Dict[Any, Any]) -> str:
     """Format pull request event message."""
@@ -46,4 +64,4 @@ def format_pr_event(payload: Dict[Any, Any]) -> str:
         f"Repository: {payload.get('repository', {}).get('full_name')}\n"
         f"Author: {pr.get('user', {}).get('login')}\n"
         f"URL: {pr.get('html_url')}"
-    ) 
+    )

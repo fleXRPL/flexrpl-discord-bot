@@ -83,4 +83,4 @@ async def discord_interaction(request: Request):
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "ok"} 
+    return {"status": "ok"}

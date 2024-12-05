@@ -80,4 +80,4 @@ class Config:
 
         logger.info("Configuration validation successful")
 
-config = Config() 
+config = Config()

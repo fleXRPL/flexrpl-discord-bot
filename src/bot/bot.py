@@ -10,21 +10,22 @@ from .events import setup_events
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class FlexRPLBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
         intents.message_content = True
         intents.guilds = True
-        
+
         super().__init__(
             command_prefix="!",
             intents=intents,
             application_id=os.getenv('DISCORD_APPLICATION_ID')
         )
-        
+
         # Set up error handler
         self.tree.error(self.on_app_command_error)
-        
+
     async def setup_hook(self):
         """Setup hook that runs before the bot starts."""
         try:

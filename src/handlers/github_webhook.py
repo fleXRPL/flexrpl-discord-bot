@@ -4,9 +4,14 @@ from src.utils.formatting import format_github_event
 import hmac
 import hashlib
 from config import config
+import logging
+from discord import Webhook, AsyncWebhookAdapter
+import aiohttp
 
 router = APIRouter()
 security = HTTPBearer()
+
+logger = logging.getLogger(__name__)
 
 async def verify_signature(request: Request):
     """Verify GitHub webhook signature."""
@@ -25,6 +30,37 @@ async def verify_signature(request: Request):
     if not hmac.compare_digest(signature, expected_signature):
         raise HTTPException(status_code=401, detail="Invalid signature")
 
+async def send_discord_webhook(webhook_url: str, content: str):
+    """Send a message to Discord via webhook."""
+    try:
+        async with aiohttp.ClientSession() as session:
+            webhook = Webhook.from_url(
+                webhook_url,
+                adapter=AsyncWebhookAdapter(session)
+            )
+            await webhook.send(content=content)
+            logger.info("Successfully sent webhook message to Discord")
+    except Exception as e:
+        logger.error(f"Error sending webhook to Discord: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send webhook to Discord"
+        )
+
+async def handle_github_webhook(event_type: str, payload: dict):
+    """Handle incoming GitHub webhook events."""
+    try:
+        # Format the message based on the event type and payload
+        formatted_message = format_github_event(event_type, payload)
+        # TODO: Implement webhook URL configuration and sending
+        logger.info(f"Processed GitHub webhook event: {event_type}")
+    except Exception as e:
+        logger.error(f"Error processing GitHub webhook: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to process GitHub webhook"
+        )
+
 @router.post("/github")
 async def github_webhook(
     request: Request,
@@ -35,7 +71,7 @@ async def github_webhook(
     event_type = request.headers.get("X-GitHub-Event")
     payload = await request.json()
     
-    formatted_message = format_github_event(event_type, payload)
+    await handle_github_webhook(event_type, payload)
     # TODO: Send formatted message to Discord channel
     
-    return {"status": "success"} 
+    return {"status": "success"}

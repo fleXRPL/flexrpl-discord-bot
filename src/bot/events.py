@@ -4,17 +4,20 @@ import discord
 
 logger = logging.getLogger(__name__)
 
+
 def setup_events(bot: commands.Bot):
     """Setup bot events."""
-    
+
     @bot.event
-    async def on_ready():
-        logger.info(f"Logged in as {bot.user.name}")
-        await bot.change_presence(
-            activity=discord.Activity(
-                type=discord.ActivityType.watching,
-                name="for commands"
-            )
+    async def on_guild_join(guild: discord.Guild):
+        logger.info(
+            f"Bot has been added to guild: {guild.name} (ID: {guild.id})"
+        )
+
+    @bot.event
+    async def on_guild_remove(guild: discord.Guild):
+        logger.info(
+            f"Bot has been removed from guild: {guild.name} (ID: {guild.id})"
         )
 
     @bot.event
@@ -22,4 +25,4 @@ def setup_events(bot: commands.Bot):
         if isinstance(error, commands.CommandNotFound):
             return
         logger.error(f"Command error: {error}")
-        await ctx.send(f"An error occurred: {str(error)}") 
+        await ctx.send(f"An error occurred: {str(error)}")

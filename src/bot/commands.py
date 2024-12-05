@@ -5,10 +5,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 async def setup_commands(bot: commands.Bot):
     """Setup bot commands."""
     try:
-        @bot.tree.command(name="githubsub", description="Subscribe to GitHub notifications")
+        @bot.tree.command(
+            name="githubsub",
+            description="Subscribe to GitHub notifications"
+        )
         @app_commands.describe(
             repository="The GitHub repository to subscribe to (format: owner/repo)"
         )
@@ -61,10 +65,10 @@ async def setup_commands(bot: commands.Bot):
         if not hasattr(bot, '_ready') or bot._ready is None:
             logger.warning("Bot not ready, waiting before syncing commands...")
             await bot.wait_until_ready()
-            
+
         await bot.tree.sync()
         logger.info("Commands synced successfully")
-        
+
     except Exception as e:
         logger.error(f"Error setting up commands: {e}")
         raise

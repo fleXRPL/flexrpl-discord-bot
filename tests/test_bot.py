@@ -29,4 +29,4 @@ async def test_bot_setup_hook():
             
             mock_setup_commands.assert_called_once_with(bot)
             mock_setup_events.assert_called_once_with(bot)
-            bot.tree.sync.assert_called_once() 
+            bot.tree.sync.assert_called_once()
