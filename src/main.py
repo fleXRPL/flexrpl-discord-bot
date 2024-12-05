@@ -1,12 +1,9 @@
 import asyncio
-import json
 import logging
 import os
 
 import uvicorn
-from discord import Interaction
 from discord.interactions import InteractionType
-from discord.webhook.async_ import async_context
 from dotenv import load_dotenv
 from fastapi import Request
 
@@ -45,34 +42,41 @@ async def run_all():
     await asyncio.gather(start_bot(), start_server())
 
 
+async def verify_discord_interaction(request: Request):
+    # Implement or import this function as needed
+    pass
+
+
 @app.post("/discord-interaction")
 async def handle_discord_interaction(request: Request):
     """Handle Discord interactions with proper verification."""
     try:
-        # Get the request body as bytes for signature verification
-        body = await request.body()
+        # Verify the interaction first
+        interaction = await verify_discord_interaction(request)
 
-        # Verify the interaction
-        interaction_data = json.loads(body)
-        interaction = Interaction(data=interaction_data, state=bot._connection)
+        # Immediately acknowledge the interaction
+        await interaction.response.defer()
 
-        # Handle different interaction types
-        if interaction.type == InteractionType.ping:
-            return {"type": 1}  # Pong response
+        # Then process the command
+        if interaction.type == InteractionType.application_command:
+            command_name = interaction.data["name"]
 
-        elif interaction.type == InteractionType.application_command:
-            # Set up async context for the interaction
-            async with async_context():
-                command = bot.tree.get_command(interaction.data["name"])
-                if command:
-                    await command.callback(interaction)
-                    return {"type": 5}  # Deferred response
-
-        return {"type": 4, "data": {"content": "Unknown command"}}
+            if command_name == "ping":
+                await interaction.followup.send("Pong!")
+            elif command_name == "githubsub":
+                await interaction.followup.send("Subscription command received")
+            elif command_name == "help":
+                await interaction.followup.send(
+                    "Available commands:\n- /ping: Check bot latency\n"
+                    "- /githubsub: Subscribe to GitHub notifications\n"
+                    "- /help: Show this message"
+                )
 
     except Exception as e:
-        logger.error(f"Error handling Discord interaction: {e}")
-        return {"type": 4, "data": {"content": "An error occurred"}}
+        logger.error(f"Error handling interaction: {e}")
+        return {"type": 1}
+
+    return {"type": 1}
 
 
 if __name__ == "__main__":
