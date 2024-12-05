@@ -1,5 +1,8 @@
 # fleXRPL Discord Bot
 
+[![Railway Deploy](https://img.shields.io/badge/Railway-Deployed-success)](https://railway.app)
+[![GitHub Actions](https://github.com/fleXRPL/flexrpl-discord-bot/actions/workflows/deploy.yml/badge.svg)](https://github.com/fleXRPL/flexrpl-discord-bot/actions)
+
 A Discord bot for GitHub notifications and repository management for the fleXRPL organization.
 
 ## Features
