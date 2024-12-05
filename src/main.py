@@ -110,8 +110,8 @@ async def startup_event():
     """Handle startup tasks with rate limiting"""
     if await should_sync_commands():
         try:
-            # Sync commands here
-            await bot.sync_commands()
+            # Use the correct method from your bot class
+            await bot.tree.sync()  # This is the correct method for syncing commands
             logger.info("Commands synced successfully")
         except Exception as e:
             logger.error(f"Failed to sync commands: {e}")
