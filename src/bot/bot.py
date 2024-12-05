@@ -48,9 +48,7 @@ class FlexRPLBot(commands.Bot):
             logger.info(f"- /{cmd.name}: {cmd.description}")
 
     async def on_app_command_error(
-        self,
-        interaction: discord.Interaction,
-        error: app_commands.AppCommandError
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ):
         """Handle errors from application commands."""
         try:
@@ -59,19 +57,18 @@ class FlexRPLBot(commands.Bot):
 
             if isinstance(error, app_commands.CommandOnCooldown):
                 await interaction.followup.send(
-                    f"This command is on cooldown. Try again in {error.retry_after:.2f}s",
-                    ephemeral=True
+                    f"This command is on cooldown. "
+                    f"Try again in {error.retry_after:.2f}s",
+                    ephemeral=True,
                 )
             elif isinstance(error, app_commands.MissingPermissions):
                 await interaction.followup.send(
-                    "You don't have permission to use this command.",
-                    ephemeral=True
+                    "You don't have permission to use this command.", ephemeral=True
                 )
             else:
                 logger.error(f"Command error: {error}", exc_info=error)
                 await interaction.followup.send(
-                    "An error occurred while processing the command.",
-                    ephemeral=True
+                    "An error occurred while processing the command.", ephemeral=True
                 )
         except Exception as e:
             logger.error(f"Error in error handler: {e}")

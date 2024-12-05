@@ -39,14 +39,12 @@ async def setup_commands(bot: commands.Bot):
 
                 # Send the actual response
                 await interaction.followup.send(
-                    f"Pong! ({bot.latency*1000:.2f}ms)",
-                    ephemeral=True
+                    f"Pong! ({bot.latency*1000:.2f}ms)", ephemeral=True
                 )
             except Exception as e:
                 logger.error(f"Error in ping command: {e}")
                 await interaction.followup.send(
-                    "An error occurred while checking latency.",
-                    ephemeral=True
+                    "An error occurred while checking latency.", ephemeral=True
                 )
 
         @bot.tree.command(name="help", description="Show available commands")

@@ -1,13 +1,14 @@
 import asyncio
+import json
+import logging
 import os
 
 import uvicorn
-from dotenv import load_dotenv
-from fastapi import FastAPI, Request
 from discord import Interaction
 from discord.interactions import InteractionType
 from discord.webhook.async_ import async_context
-import json
+from dotenv import load_dotenv
+from fastapi import Request
 
 from app import app
 from bot.bot import FlexRPLBot
@@ -17,6 +18,10 @@ load_dotenv()
 
 # Create bot instance
 bot = FlexRPLBot()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 async def start_bot():
@@ -46,10 +51,6 @@ async def handle_discord_interaction(request: Request):
     try:
         # Get the request body as bytes for signature verification
         body = await request.body()
-
-        # Get Discord headers
-        signature = request.headers.get('X-Signature-Ed25519')
-        timestamp = request.headers.get('X-Signature-Timestamp')
 
         # Verify the interaction
         interaction_data = json.loads(body)
