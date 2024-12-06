@@ -2,6 +2,7 @@
 
 [![Railway Deploy](https://img.shields.io/badge/Railway-Deployed-success)](https://railway.app)
 [![GitHub Actions](https://github.com/fleXRPL/flexrpl-discord-bot/actions/workflows/deploy.yml/badge.svg)](https://github.com/fleXRPL/flexrpl-discord-bot/actions)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=fleXRPL_flexrpl-discord-bot&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=fleXRPL_flexrpl-discord-bot)
 
 A Discord bot for GitHub notifications and repository management for the fleXRPL organization.
 
