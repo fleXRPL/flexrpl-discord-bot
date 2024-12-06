@@ -24,10 +24,13 @@ A Discord bot for GitHub notifications and repository management for the fleXRPL
 ```bash
 .flexrpl-discord-bot/
 ├── Dockerfile
+├── PRIVACY_POLICY.md
 ├── Procfile
 ├── README.md
+├── TERMS_OF_SERVICE.md
 ├── app.py
 ├── config.py
+├── format_and_lint.sh
 ├── requirements-dev.txt
 ├── requirements.txt
 ├── runtime.txt
@@ -35,17 +38,23 @@ A Discord bot for GitHub notifications and repository management for the fleXRPL
 ├── src
 │   ├── bot
 │   │   ├── __init__.py
+│   │   ├── bot.py
 │   │   ├── commands.py
 │   │   └── events.py
 │   ├── handlers
 │   │   └── github_webhook.py
+│   ├── main.py
 │   └── utils
 │       └── formatting.py
 └── tests
+    ├── conftest.py
     ├── test_bot.py
-    └── test_formatting.py
+    ├── test_commands.py
+    ├── test_events.py
+    ├── test_formatting.py
+    └── test_main.py
 
-6 directories, 16 files
+11 directories, 44 files
 ```
 ## Development Setup
 
