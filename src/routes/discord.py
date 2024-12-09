@@ -59,40 +59,21 @@ async def discord_interaction(request: Request):
                 status_code=401,
             )
 
+        # Parse the request body
+        request_data = json.loads(body)
+        interaction_type = request_data.get("type")
+
         # Handle PING
-        if b'"type":1' in body:
+        if interaction_type == 1:
             return Response(content='{"type":1}', media_type="application/json")
 
-        # Parse the request body for other interaction types
-        try:
-            request_data = json.loads(body)
-            interaction_type = request_data.get("type")
+        # Handle APPLICATION_COMMAND
+        if interaction_type == 2:
+            # Return a deferred response immediately
+            return Response(content='{"type":5}', media_type="application/json")
 
-            # Handle different interaction types
-            if interaction_type == 2:  # APPLICATION_COMMAND
-                command_name = request_data.get("data", {}).get("name")
-                logger.info(f"Received command: {command_name}")
-                return Response(
-                    content=json.dumps(
-                        {
-                            "type": 4,
-                            "data": {
-                                "content": f"Processing command: {command_name}",
-                                "flags": 64,  # Ephemeral flag
-                            },
-                        }
-                    ),
-                    media_type="application/json",
-                )
-
-            # Default response for unhandled types
-            return Response(content='{"type":1}', media_type="application/json")
-        except json.JSONDecodeError:
-            return Response(
-                content='{"error":"invalid json"}',
-                media_type="application/json",
-                status_code=400,
-            )
+        # Default response
+        return Response(content='{"type":1}', media_type="application/json")
 
     except Exception as e:
         logger.error(f"Error: {e}")

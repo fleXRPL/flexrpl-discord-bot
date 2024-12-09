@@ -4,6 +4,7 @@ from nacl.signing import SigningKey
 import json
 from src.routes.discord import router, get_verify_key
 from fastapi import FastAPI
+from config import config  # Import the config module
 
 # Create a test app and add the router
 app = FastAPI()
@@ -28,11 +29,30 @@ def ping_payload():
 
 @pytest.fixture
 def command_payload():
+    # Use mock values for testing
+    mock_guild_id = "123456789"
+    mock_application_id = "1313573192371273788"  # Mock application ID
+    
     return json.dumps({
-        "type": 2,
+        "type": 2,  # APPLICATION_COMMAND
+        "id": "123456789",  # Test ID can be mock value
+        "application_id": mock_application_id,  # Use mock application ID instead of config
+        "channel_id": "987654321",  # Test ID can be mock value
+        "guild_id": mock_guild_id,
         "data": {
-            "name": "test_command"
-        }
+            "id": "987654321",
+            "name": "test_command",
+            "type": 1
+        },
+        "member": {
+            "user": {
+                "id": "123456789",
+                "username": "test_user",
+                "discriminator": "1234"
+            }
+        },
+        "token": "mock_token",
+        "version": 1
     })
 
 def test_ping_interaction(ping_payload, monkeypatch):
@@ -88,4 +108,5 @@ def test_command_interaction(command_payload, monkeypatch):
         content=command_payload
     )
     
-    assert response.status_code == 200 
+    assert response.status_code == 200
+    assert response.json() == {"type": 5}  # Deferred response type
