@@ -18,6 +18,7 @@ async def setup_commands(bot: commands.Bot):
             repository="The GitHub repository to subscribe to (format: owner/repo)"
         )
         async def github_sub(interaction: discord.Interaction, repository: str):
+            """Handle GitHub subscription command."""
             try:
                 logger.info(
                     f"Processing githubsub command for repository: {repository}"
@@ -26,43 +27,41 @@ async def setup_commands(bot: commands.Bot):
                 logger.debug("Response deferred")
 
                 # Add processing logic here
-                logger.info("Sending followup message")
                 await interaction.followup.send(
-                    f"Attempting to subscribe to repository: {repository}",
+                    f"✅ Attempting to subscribe to repository: {repository}",
                     ephemeral=True,
                 )
+                logger.info(f"Subscription request processed for: {repository}")
             except Exception as e:
                 logger.error(f"Error in githubsub command: {e}", exc_info=True)
-                if not interaction.response.is_done():
-                    await interaction.response.defer(ephemeral=True)
-                await interaction.followup.send(
-                    "An error occurred while processing your request.", ephemeral=True
+                message = (
+                    "❌ An error occurred while processing your subscription request."
                 )
+                if not interaction.response.is_done():
+                    await interaction.response.send_message(message, ephemeral=True)
+                else:
+                    await interaction.followup.send(message, ephemeral=True)
 
         @bot.tree.command(name="ping", description="Check bot latency")
         async def ping(interaction: discord.Interaction):
             """Handle ping command."""
             try:
                 logger.info("Processing ping command")
-                await interaction.response.defer(ephemeral=True)
-                logger.debug("Response deferred")
-
-                latency = bot.latency * 1000
-                logger.info(f"Bot latency: {latency:.2f}ms")
-
-                await interaction.followup.send(
-                    f"Pong! ({latency:.2f}ms)", ephemeral=True
+                latency = round(bot.latency * 1000)
+                await interaction.response.send_message(
+                    f"Pong! 🏓 ({latency}ms)", ephemeral=True
                 )
+                logger.info(f"Ping command completed. Latency: {latency}ms")
             except Exception as e:
                 logger.error(f"Error in ping command: {e}", exc_info=True)
                 if not interaction.response.is_done():
-                    await interaction.response.defer(ephemeral=True)
-                await interaction.followup.send(
-                    "An error occurred while checking latency.", ephemeral=True
-                )
+                    await interaction.response.send_message(
+                        "❌ An error occurred while checking latency.", ephemeral=True
+                    )
 
         @bot.tree.command(name="help", description="Show available commands")
         async def help_command(interaction: discord.Interaction):
+            """Handle help command."""
             try:
                 logger.info("Processing help command")
                 commands_list = [
@@ -75,13 +74,13 @@ async def setup_commands(bot: commands.Bot):
                     "**Available Commands:**\n" + "\n".join(commands_list),
                     ephemeral=True,
                 )
+                logger.info("Help command completed successfully")
             except Exception as e:
                 logger.error(f"Error in help command: {e}", exc_info=True)
                 if not interaction.response.is_done():
-                    await interaction.response.defer(ephemeral=True)
-                await interaction.followup.send(
-                    "An error occurred while fetching commands.", ephemeral=True
-                )
+                    await interaction.response.send_message(
+                        "❌ An error occurred while fetching commands.", ephemeral=True
+                    )
 
         if not hasattr(bot, "_ready") or bot._ready is None:
             logger.warning("Bot not ready, waiting before syncing commands...")
