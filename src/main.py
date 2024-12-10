@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Add rate limiting control
 last_sync_time = 0
-SYNC_COOLDOWN = 60  # seconds between syncs
+SYNC_COOLDOWN = 300  # 5 minutes between syncs
 
 
 async def should_sync_commands():
@@ -118,8 +118,8 @@ async def startup_event():
     """Handle startup tasks with rate limiting"""
     if await should_sync_commands():
         try:
-            # Use the correct method from your bot class
-            await bot.tree.sync()  # This is the correct method for syncing commands
+            await asyncio.sleep(5)  # Add small delay before sync
+            await bot.tree.sync()
             logger.info("Commands synced successfully")
         except Exception as e:
             logger.error(f"Failed to sync commands: {e}")
