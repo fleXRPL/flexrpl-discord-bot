@@ -12,6 +12,14 @@ A Discord bot for GitHub notifications and repository management for the fleXRPL
 - Repository event notifications
 - Command-based subscription management
 - Role-based access control
+- Comprehensive logging system
+- Secure command handling with deferred responses
+
+## Available Commands
+
+- `/githubsub` - Subscribe to GitHub notifications
+- `/help` - Show available commands
+- `/ping` - Check bot latency
 
 ## Prerequisites
 
@@ -45,17 +53,20 @@ A Discord bot for GitHub notifications and repository management for the fleXRPL
 │   ├── handlers
 │   │   └── github_webhook.py
 │   ├── main.py
+│   ├── routes
+│   │   └── discord.py
 │   └── utils
 │       └── formatting.py
 └── tests
     ├── conftest.py
     ├── test_bot.py
     ├── test_commands.py
+    ├── test_discord_routes.py
     ├── test_events.py
     ├── test_formatting.py
     └── test_main.py
 
-11 directories, 44 files
+13 directories, 48 files
 ```
 ## Development Setup
 
@@ -74,11 +85,9 @@ pre-commit install
 pytest
 ```
 
-4. Run linting manually:
+4. Run linting and formatting:
 ```bash
-flake8 src tests
-black src tests
-isort src tests
+bash format_and_lint.sh
 ```
 
 ## Local Development
@@ -111,22 +120,8 @@ cp .env.example .env
 
 5. Run the application:
 ```bash
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
-
-## Deployment on Railway.app
-
-1. Fork this repository
-2. Create new project on Railway.app
-3. Connect your GitHub repository
-4. Add required environment variables in Railway dashboard:
-   - `DISCORD_PUBLIC_KEY`
-   - `DISCORD_APPLICATION_ID`
-   - `DISCORD_BOT_TOKEN`
-   - `DISCORD_CLIENT_ID`
-   - `GITHUB_WEBHOOK_SECRET`
-   - `PORT` (default: 8000)
-5. Deploy!
 
 ## Environment Variables
 
@@ -142,6 +137,36 @@ Optional variables:
 - `LOG_LEVEL`: Logging level (default: INFO)
 - `ALLOWED_GUILD_IDS`: Comma-separated list of allowed Discord server IDs
 - `ADMIN_USER_IDS`: Comma-separated list of Discord admin user IDs
+
+## Deployment on Railway.app
+
+1. Fork this repository
+2. Create new project on Railway.app
+3. Connect your GitHub repository
+4. Add required environment variables in Railway dashboard
+5. Deploy!
+
+## Testing
+
+The bot includes comprehensive tests:
+```bash
+# Run all tests
+pytest
+
+# Run tests with coverage
+pytest --cov=src
+
+# Run specific test file
+pytest tests/test_discord_routes.py -v
+```
+
+## Logging
+
+The bot includes detailed logging for troubleshooting:
+- Request/response logging for all interactions
+- Command processing logs
+- Error tracking with stack traces
+- Performance metrics
 
 ## Contributing
 

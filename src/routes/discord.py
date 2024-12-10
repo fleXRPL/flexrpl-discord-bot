@@ -28,7 +28,11 @@ async def discord_interaction(request: Request):
         signature = request.headers.get("X-Signature-Ed25519")
         timestamp = request.headers.get("X-Signature-Timestamp")
 
+        logger.info("Received Discord interaction")
+        logger.debug(f"Headers: {request.headers}")
+
         if not signature or not timestamp:
+            logger.warning("Missing signature or timestamp")
             return Response(
                 content='{"error":"invalid request"}',
                 media_type="application/json",
@@ -37,10 +41,13 @@ async def discord_interaction(request: Request):
 
         # Read body
         body = await request.body()
+        request_data = json.loads(body)
+        logger.debug(f"Request data: {request_data}")
 
         # Verify the request
         verify_key = get_verify_key()
         if not verify_key:
+            logger.error("Failed to get verify key")
             return Response(
                 content='{"error":"configuration error"}',
                 media_type="application/json",
@@ -51,6 +58,7 @@ async def discord_interaction(request: Request):
             verify_key.verify(
                 (timestamp + body.decode()).encode(), bytes.fromhex(signature)
             )
+            logger.debug("Signature verification successful")
         except Exception as e:
             logger.error(f"Verification failed: {e}")
             return Response(
@@ -59,24 +67,30 @@ async def discord_interaction(request: Request):
                 status_code=401,
             )
 
-        # Parse the request body
-        request_data = json.loads(body)
         interaction_type = request_data.get("type")
+        logger.info(f"Processing interaction type: {interaction_type}")
 
         # Handle PING
         if interaction_type == 1:
+            logger.info("Handling PING interaction")
             return Response(content='{"type":1}', media_type="application/json")
 
         # Handle APPLICATION_COMMAND
         if interaction_type == 2:
+            command_data = request_data.get("data", {})
+            command_name = command_data.get("name")
+            logger.info(f"Handling command: {command_name}")
+
             # Return a deferred response immediately
+            logger.info("Sending deferred response")
             return Response(content='{"type":5}', media_type="application/json")
 
         # Default response
+        logger.warning(f"Unhandled interaction type: {interaction_type}")
         return Response(content='{"type":1}', media_type="application/json")
 
     except Exception as e:
-        logger.error(f"Error: {e}")
+        logger.error(f"Error processing interaction: {e}", exc_info=True)
         return Response(
             content='{"error":"internal error"}',
             media_type="application/json",
