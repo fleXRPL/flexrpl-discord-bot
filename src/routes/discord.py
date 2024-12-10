@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 
 from fastapi import APIRouter, Request, Response
 from nacl.exceptions import ValueError as NaclValueError
@@ -104,25 +105,78 @@ async def handle_command(interaction_data: dict) -> dict:
 
         # Handle different commands
         if command_name == "ping":
-            # Ping should respond immediately
-            latency = round(bot.latency * 1000)
-            return {
-                "type": 4,  # CHANNEL_MESSAGE_WITH_SOURCE
-                "data": {"content": f"Pong! 🏓 ({latency}ms)", "flags": 64},  # EPHEMERAL
-            }
+            try:
+                # Check if latency is valid
+                latency = bot.latency
+                if latency and not math.isnan(latency):
+                    latency_ms = round(latency * 1000)
+                    return {
+                        "type": 4,
+                        "data": {"content": f"Pong! 🏓 ({latency_ms}ms)", "flags": 64},
+                    }
+                else:
+                    return {
+                        "type": 4,
+                        "data": {
+                            "content": "Pong! 🏓 (Latency unavailable)",
+                            "flags": 64,
+                        },
+                    }
+            except Exception as e:
+                logger.error(f"Error in ping command: {e}", exc_info=True)
+                return {
+                    "type": 4,
+                    "data": {
+                        "content": "❌ Could not get latency information.",
+                        "flags": 64,
+                    },
+                }
         elif command_name == "help":
-            # Help should respond immediately
-            commands_list = [
-                f"`/{command.name}` - {command.description}"
-                for command in bot.tree.get_commands()
-            ]
-            return {
-                "type": 4,  # CHANNEL_MESSAGE_WITH_SOURCE
-                "data": {
-                    "content": "**Available Commands:**\n" + "\n".join(commands_list),
-                    "flags": 64,  # EPHEMERAL
-                },
-            }
+            try:
+                # Get list of commands
+                commands = list(bot.tree.get_commands())
+                logger.info(f"Found {len(commands)} commands")
+
+                if not commands:
+                    logger.warning("No commands found in bot.tree")
+                    return {
+                        "type": 4,
+                        "data": {
+                            "content": "❌ No commands are currently available.",
+                            "flags": 64,
+                        },
+                    }
+
+                # Build commands list with logging
+                commands_list = []
+                for cmd in commands:
+                    command_info = f"`/{cmd.name}` - {cmd.description}"
+                    logger.debug(f"Adding command to help: {command_info}")
+                    commands_list.append(command_info)
+
+                content = "**Available Commands:**\n" + "\n".join(commands_list)
+                logger.info(f"Sending help content with {len(commands_list)} commands")
+                logger.debug(f"Full help content: {content}")
+
+                return {"type": 4, "data": {"content": content, "flags": 64}}
+            except AttributeError as e:
+                logger.error(f"Bot tree access error: {e}", exc_info=True)
+                return {
+                    "type": 4,
+                    "data": {
+                        "content": "❌ Could not access commands list.",
+                        "flags": 64,
+                    },
+                }
+            except Exception as e:
+                logger.error(f"Error generating help content: {e}", exc_info=True)
+                return {
+                    "type": 4,
+                    "data": {
+                        "content": "❌ An error occurred while retrieving commands list.",
+                        "flags": 64,
+                    },
+                }
         elif command_name == "githubsub":
             # Only defer long-running commands
             logger.info("Sending deferred response")
