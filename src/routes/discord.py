@@ -173,7 +173,9 @@ async def handle_command(interaction_data: dict) -> dict:
                 return {
                     "type": 4,
                     "data": {
-                        "content": "❌ An error occurred while retrieving commands list.",
+                        "content": (
+                            "❌ An error occurred while retrieving commands list."
+                        ),
                         "flags": 64,
                     },
                 }
