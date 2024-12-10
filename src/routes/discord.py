@@ -6,6 +6,7 @@ from nacl.exceptions import ValueError as NaclValueError
 from nacl.signing import VerifyKey
 
 from config import config
+from src.bot.bot import bot
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -96,3 +97,52 @@ async def discord_interaction(request: Request):
             media_type="application/json",
             status_code=500,
         )
+
+
+async def handle_command(interaction_data: dict) -> dict:
+    """Handle Discord command interactions."""
+    try:
+        command_name = interaction_data.get("data", {}).get("name")
+        logger.info(f"Handling command: {command_name}")
+
+        # Handle different commands
+        if command_name == "ping":
+            # Ping should respond immediately
+            latency = round(bot.latency * 1000)
+            return {
+                "type": 4,  # CHANNEL_MESSAGE_WITH_SOURCE
+                "data": {"content": f"Pong! 🏓 ({latency}ms)", "flags": 64},  # EPHEMERAL
+            }
+        elif command_name == "help":
+            # Help should respond immediately
+            commands_list = [
+                f"`/{command.name}` - {command.description}"
+                for command in bot.tree.get_commands()
+            ]
+            return {
+                "type": 4,  # CHANNEL_MESSAGE_WITH_SOURCE
+                "data": {
+                    "content": "**Available Commands:**\n" + "\n".join(commands_list),
+                    "flags": 64,  # EPHEMERAL
+                },
+            }
+        elif command_name == "githubsub":
+            # Only defer long-running commands
+            logger.info("Sending deferred response")
+            return {
+                "type": 5,  # DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+                "data": {"flags": 64},  # EPHEMERAL
+            }
+
+        # Default response for unknown commands
+        return {"type": 4, "data": {"content": "Unknown command", "flags": 64}}
+
+    except Exception as e:
+        logger.error(f"Error handling command: {e}", exc_info=True)
+        return {
+            "type": 4,
+            "data": {
+                "content": "❌ An error occurred while processing the command.",
+                "flags": 64,
+            },
+        }
