@@ -78,13 +78,10 @@ async def discord_interaction(request: Request):
 
         # Handle APPLICATION_COMMAND
         if interaction_type == 2:
-            command_data = request_data.get("data", {})
-            command_name = command_data.get("name")
-            logger.info(f"Handling command: {command_name}")
-
-            # Return a deferred response immediately
-            logger.info("Sending deferred response")
-            return Response(content='{"type":5}', media_type="application/json")
+            response_data = await handle_command(request_data)
+            return Response(
+                content=json.dumps(response_data), media_type="application/json"
+            )
 
         # Default response
         logger.warning(f"Unhandled interaction type: {interaction_type}")

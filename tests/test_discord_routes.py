@@ -101,6 +101,11 @@ def test_command_interaction(command_payload, monkeypatch):
     # Mock the verify key
     monkeypatch.setattr("src.routes.discord.get_verify_key", lambda: verify_key)
     
+    # Create a test payload with a specific command
+    payload = json.loads(command_payload)
+    payload["data"] = {"name": "githubsub", "options": [{"name": "repository", "value": "owner/repo"}]}
+    command_payload = json.dumps(payload)
+    
     headers = create_signed_headers(command_payload)
     response = client.post(
         "/discord-interaction",
@@ -109,4 +114,20 @@ def test_command_interaction(command_payload, monkeypatch):
     )
     
     assert response.status_code == 200
-    assert response.json() == {"type": 5}  # Deferred response type
+    response_data = response.json()
+    
+    # Check response based on command type
+    command_name = payload["data"]["name"]
+    if command_name == "githubsub":
+        assert response_data == {"type": 5, "data": {"flags": 64}}  # Deferred response
+    elif command_name == "ping":
+        assert response_data["type"] == 4  # Immediate response
+        assert "Pong!" in response_data["data"]["content"]
+    elif command_name == "help":
+        assert response_data["type"] == 4  # Immediate response
+        assert "Available Commands" in response_data["data"]["content"]
+    else:
+        assert response_data == {
+            "type": 4,
+            "data": {"content": "Unknown command", "flags": 64}
+        }
