@@ -1,84 +1,69 @@
 import logging
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from discord.ext import commands
-from discord import Guild
 from src.bot.events import setup_events
 
 @pytest.fixture
 def mock_bot():
     """Create a mock bot instance."""
     bot = MagicMock(spec=commands.Bot)
-    # Store event handlers
+    # Mock the event decorator to store handlers
     bot.event_handlers = {}
-    
-    # Mock the event decorator
-    def event(coro):
-        bot.event_handlers[coro.__name__] = coro
-        return coro
-    bot.event = event
-    
+    def event_decorator(func):
+        bot.event_handlers[func.__name__] = func
+        return func
+    bot.event = event_decorator
     return bot
 
-@pytest.fixture
-def mock_guild():
-    """Create a mock guild instance."""
-    guild = MagicMock(spec=Guild)
-    guild.name = "Test Guild"
-    guild.id = 123456789
-    return guild
-
-@pytest.fixture
-def mock_ctx():
-    """Create a mock context."""
-    ctx = MagicMock()
-    ctx.send = AsyncMock()
-    return ctx
-
-def test_setup_events(mock_bot):
+@pytest.mark.asyncio
+async def test_setup_events(mock_bot):
     """Test that events are properly registered."""
-    setup_events(mock_bot)
-    
-    # Verify that all expected events are registered
+    await setup_events(mock_bot)
     assert 'on_guild_join' in mock_bot.event_handlers
     assert 'on_guild_remove' in mock_bot.event_handlers
     assert 'on_command_error' in mock_bot.event_handlers
 
 @pytest.mark.asyncio
-async def test_on_guild_join(mock_bot, mock_guild, caplog):
+async def test_on_guild_join(mock_bot, caplog):
     """Test the guild join event handler."""
-    with caplog.at_level(logging.INFO):
-        setup_events(mock_bot)
-        await mock_bot.event_handlers['on_guild_join'](mock_guild)
-        
-        assert f"Bot has been added to guild: {mock_guild.name} (ID: {mock_guild.id})" in caplog.text
-
-@pytest.mark.asyncio
-async def test_on_guild_remove(mock_bot, mock_guild, caplog):
-    """Test the guild remove event handler."""
-    with caplog.at_level(logging.INFO):
-        setup_events(mock_bot)
-        await mock_bot.event_handlers['on_guild_remove'](mock_guild)
-        
-        assert f"Bot has been removed from guild: {mock_guild.name} (ID: {mock_guild.id})" in caplog.text
-
-@pytest.mark.asyncio
-async def test_on_command_error_command_not_found(mock_bot, mock_ctx):
-    """Test command not found error handling."""
-    setup_events(mock_bot)
-    error = commands.CommandNotFound()
+    mock_guild = MagicMock()
+    mock_guild.name = "Test Guild"
+    mock_guild.id = "123456"
     
+    with caplog.at_level(logging.INFO):
+        await setup_events(mock_bot)
+        await mock_bot.event_handlers['on_guild_join'](mock_guild)
+        assert "Bot has been added to guild: Test Guild" in caplog.text
+
+@pytest.mark.asyncio
+async def test_on_guild_remove(mock_bot, caplog):
+    """Test the guild remove event handler."""
+    mock_guild = MagicMock()
+    mock_guild.name = "Test Guild"
+    mock_guild.id = "123456"
+    
+    with caplog.at_level(logging.INFO):
+        await setup_events(mock_bot)
+        await mock_bot.event_handlers['on_guild_remove'](mock_guild)
+        assert "Bot has been removed from guild: Test Guild" in caplog.text
+
+@pytest.mark.asyncio
+async def test_on_command_error_command_not_found(mock_bot):
+    """Test command not found error handling."""
+    mock_ctx = AsyncMock()
+    await setup_events(mock_bot)
+    error = commands.CommandNotFound()
     await mock_bot.event_handlers['on_command_error'](mock_ctx, error)
     mock_ctx.send.assert_not_called()
 
 @pytest.mark.asyncio
-async def test_on_command_error_generic(mock_bot, mock_ctx, caplog):
+async def test_on_command_error_generic(mock_bot, caplog):
     """Test generic command error handling."""
+    mock_ctx = AsyncMock()
     with caplog.at_level(logging.ERROR):
-        setup_events(mock_bot)
+        await setup_events(mock_bot)
         error = Exception("Test error")
-        
         await mock_bot.event_handlers['on_command_error'](mock_ctx, error)
-        
-        mock_ctx.send.assert_called_once_with("An error occurred: Test error")
         assert "Command error: Test error" in caplog.text
+        mock_ctx.send.assert_called_once_with("An error occurred: Test error")

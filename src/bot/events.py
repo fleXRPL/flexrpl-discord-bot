@@ -6,7 +6,7 @@ from discord.ext import commands
 logger = logging.getLogger(__name__)
 
 
-def setup_events(bot: commands.Bot):
+async def setup_events(bot: commands.Bot):
     """Setup bot events."""
 
     @bot.event
@@ -23,3 +23,6 @@ def setup_events(bot: commands.Bot):
             return
         logger.error(f"Command error: {error}")
         await ctx.send(f"An error occurred: {str(error)}")
+
+    # Add return statement to fix NoneType error
+    return True
