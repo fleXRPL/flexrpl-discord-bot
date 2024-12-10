@@ -29,14 +29,25 @@ class FlexRPLBot(commands.Bot):
         self.tree.error(self.on_app_command_error)
 
     async def setup_hook(self):
-        """Setup hook that runs before the bot starts."""
+        """Initialize the bot with required setup."""
         try:
+            logger.info("Setting up bot...")
+            await setup_events(self)
+            # Setup commands
             await setup_commands(self)
-            setup_events(self)
+
+            # Sync commands globally
             await self.tree.sync()
             logger.info("Bot commands synced successfully")
+
+            # Log available commands
+            commands = self.tree.get_commands()
+            logger.info("Available commands after sync:")
+            for cmd in commands:
+                logger.info(f"- /{cmd.name}: {cmd.description}")
+
         except Exception as e:
-            logger.error(f"Error in setup hook: {e}")
+            logger.error(f"Error in setup_hook: {e}", exc_info=True)
             raise
 
     async def on_ready(self):

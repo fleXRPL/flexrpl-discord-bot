@@ -35,9 +35,22 @@ async def test_bot_initialization():
 @pytest.mark.asyncio
 async def test_setup_hook_success(bot):
     """Test successful setup hook execution."""
-    with patch.object(bot.tree, 'sync', new_callable=AsyncMock) as mock_sync:
+    # Create async mocks for both functions
+    setup_events_mock = AsyncMock()
+    setup_commands_mock = AsyncMock()
+    
+    # Patch both functions at the module level
+    with patch('src.bot.bot.setup_events', setup_events_mock), \
+         patch('src.bot.bot.setup_commands', setup_commands_mock), \
+         patch.object(bot.tree, 'sync', new_callable=AsyncMock) as sync_mock:
+        
+        # Execute the hook
         await bot.setup_hook()
-        mock_sync.assert_called_once()
+        
+        # Verify all mocks were called correctly
+        setup_events_mock.assert_called_once_with(bot)
+        setup_commands_mock.assert_called_once_with(bot)
+        sync_mock.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_setup_hook_failure(bot):
