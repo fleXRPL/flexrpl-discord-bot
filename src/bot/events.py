@@ -24,5 +24,5 @@ async def setup_events(bot: commands.Bot):
         logger.error(f"Command error: {error}")
         await ctx.send(f"An error occurred: {str(error)}")
 
-    # Add return statement to fix NoneType error
+    # Return True to prevent NoneType error
     return True

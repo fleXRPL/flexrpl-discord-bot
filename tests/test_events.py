@@ -19,7 +19,8 @@ def mock_bot():
 @pytest.mark.asyncio
 async def test_setup_events(mock_bot):
     """Test that events are properly registered."""
-    await setup_events(mock_bot)
+    result = await setup_events(mock_bot)
+    assert result is True
     assert 'on_guild_join' in mock_bot.event_handlers
     assert 'on_guild_remove' in mock_bot.event_handlers
     assert 'on_command_error' in mock_bot.event_handlers

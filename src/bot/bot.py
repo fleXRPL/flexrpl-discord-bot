@@ -85,5 +85,4 @@ class FlexRPLBot(commands.Bot):
             logger.error(f"Error in error handler: {e}")
 
 
-# Export the bot instance so it can be imported by other modules
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.default())
+bot = FlexRPLBot()
