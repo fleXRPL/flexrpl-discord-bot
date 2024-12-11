@@ -14,7 +14,14 @@ jobs:
         with:
           script: |
             const webhookUrl = '${{ secrets.DISCORD_WEBHOOK }}';
-            const message = `New push to repository: ${context.repo.repo}\nBranch: ${context.ref}\nCommit: ${context.sha}\nAuthor: ${context.actor}\nLink: ${context.serverUrl}/${context.repo.repo}/commit/${context.sha}`;
+            const repo = context.repo.repo;
+            const sha = context.sha;
+            const ref = context.ref;
+            const actor = context.actor;
+            const baseUrl = `https://github.com`; // Explicitly define the base URL
+            const commitUrl = `${baseUrl}/${repo}/commit/${sha}`;
+            const message = `New push to repository: ${repo}\nBranch: ${ref}\nCommit: ${sha}\nAuthor: ${actor}\nLink: ${commitUrl}`;
+
             const response = await fetch(webhookUrl, {
               method: 'POST',
               headers: {
