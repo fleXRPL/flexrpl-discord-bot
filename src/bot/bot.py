@@ -1,44 +1,32 @@
 import logging
-import os
 
 import discord
-from discord import app_commands
 from discord.ext import commands
 
-from .commands import setup_commands
-from .events import setup_events
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 class FlexRPLBot(commands.Bot):
+    """Custom bot class for FlexRPL."""
+
     def __init__(self):
         intents = discord.Intents.default()
         intents.message_content = True
-        intents.guilds = True
-
-        super().__init__(
-            command_prefix="!",
-            intents=intents,
-            application_id=os.getenv("DISCORD_APPLICATION_ID"),
-        )
-
-        # Set up error handler
-        self.tree.error(self.on_app_command_error)
+        super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
-        """Initialize the bot with required setup."""
+        """Set up bot hooks and sync commands."""
         try:
             logger.info("Setting up bot...")
-            await setup_events(self)
-            # Setup commands
-            await setup_commands(self)
+            # Import here to avoid circular imports
+            from src.bot.commands import setup_commands
+            from src.bot.events import setup_events
 
-            # Sync commands globally
+            await setup_commands(self)
+            await setup_events(self)
+
+            # Sync commands with Discord
             await self.tree.sync()
-            logger.info("Bot commands synced successfully")
 
             # Log available commands
             commands = self.tree.get_commands()
@@ -46,43 +34,51 @@ class FlexRPLBot(commands.Bot):
             for cmd in commands:
                 logger.info(f"- /{cmd.name}: {cmd.description}")
 
+            logger.info("Bot commands synced successfully")
+
         except Exception as e:
-            logger.error(f"Error in setup_hook: {e}", exc_info=True)
+            logger.error(f"Error in setup hook: {e}")
             raise
 
     async def on_ready(self):
-        """Event handler for when the bot is ready."""
-        logger.info(f"Logged in as {self.user.name} (ID: {self.user.id})")
+        """Handle bot ready event."""
+        logger.info(f"Logged in as {self.user} (ID: {self.user.id})")
         logger.info("------")
         logger.info("Registered commands:")
-        for cmd in self.tree.get_commands():
+        commands = self.tree.get_commands()
+        for cmd in commands:
             logger.info(f"- /{cmd.name}: {cmd.description}")
 
     async def on_app_command_error(
-        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+        self, interaction: discord.Interaction, error: Exception
     ):
-        """Handle errors from application commands."""
+        """Handle application command errors."""
         try:
-            if not interaction.response.is_done():
-                await interaction.response.defer(ephemeral=True)
-
-            if isinstance(error, app_commands.CommandOnCooldown):
-                await interaction.followup.send(
-                    f"This command is on cooldown. "
-                    f"Try again in {error.retry_after:.2f}s",
+            if isinstance(error, commands.CommandOnCooldown):
+                await interaction.response.send_message(
+                    f"Command is on cooldown. Try again in {error.retry_after:.1f}s",
                     ephemeral=True,
                 )
-            elif isinstance(error, app_commands.MissingPermissions):
+            elif isinstance(error, commands.MissingPermissions):
+                await interaction.response.send_message(
+                    "You don't have permission to use this command", ephemeral=True
+                )
+            elif isinstance(error, discord.InteractionResponded):
                 await interaction.followup.send(
-                    "You don't have permission to use this command.", ephemeral=True
+                    "An error occurred while processing your command", ephemeral=True
                 )
             else:
-                logger.error(f"Command error: {error}", exc_info=error)
-                await interaction.followup.send(
-                    "An error occurred while processing the command.", ephemeral=True
+                await interaction.response.send_message(
+                    "An error occurred while processing your command", ephemeral=True
                 )
-        except Exception as e:
-            logger.error(f"Error in error handler: {e}")
+        except discord.InteractionResponded:
+            try:
+                await interaction.followup.send(
+                    "An error occurred while processing your command", ephemeral=True
+                )
+            except Exception as e:
+                logger.error(f"Error sending error message: {e}")
 
 
+# Create bot instance
 bot = FlexRPLBot()
