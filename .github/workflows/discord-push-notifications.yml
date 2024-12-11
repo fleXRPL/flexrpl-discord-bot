@@ -8,22 +8,14 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
-    env:
-      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
     steps:
       - name: Send Discord notification
         uses: actions/github-script@v6
         with:
           script: |
-            const webhookUrl = process.env.DISCORD_WEBHOOK;
-            const repo = context.repo.repo;
-            const sha = context.sha;
-            const ref = context.ref;
-            const actor = context.actor;
-            const baseUrl = `https://github.com`;
-            const commitUrl = `${baseUrl}/${repo}/commit/${sha}`;
-            const message = `New push to repository: ${repo}\nBranch: ${ref}\nCommit: ${sha}\nAuthor: ${actor}\nLink: ${commitUrl}`;
-
+            const webhookUrl = '${{ secrets.DISCORD_WEBHOOK }}'; // Ensure this secret is set correctly
+            const message = `New push to repository: ${context.repo.repo}\nBranch: ${context.ref}\nCommit: ${context.sha}\nAuthor: ${context.actor}\nLink: https://github.com/${context.repo.repo}/commit/${context.sha}`;
+            
             const response = await fetch(webhookUrl, {
               method: 'POST',
               headers: {
@@ -31,6 +23,7 @@ jobs:
               },
               body: JSON.stringify({ content: message })
             });
+            
             if (!response.ok) {
-              throw new Error(`Discord webhook request failed with status ${response.status}: ${response.statusText}`);
+              throw new Error(`Discord webhook request failed: ${response.status} ${response.statusText}`);
             }
