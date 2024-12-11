@@ -1,0 +1,30 @@
+name: Discord Push Notifications
+
+on:
+  push:
+    branches:
+      - main  # Specify the branch(es) to monitor
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get repository information
+        id: repo
+        run: |
+          echo "::set-output name=repository::$(echo ${{ github.repository }})"
+          echo "::set-output name=branch::$(echo ${{ github.ref }})"
+          echo "::set-output name=commit::$(echo ${{ github.sha }})"
+          echo "::set-output name=actor::$(echo ${{ github.actor }})"
+
+      - name: Send Discord notification
+        uses: bythope/discord-webhook-messages@v1
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }} # Access the secret here
+          username: GitHub Notifications
+          content: |
+            New push to repository: ${{ repo.repository }}
+            Branch: ${{ repo.branch }}
+            Commit: ${{ repo.commit }}
+            Author: ${{ repo.actor }}
+            Link: ${{ github.server_url }}/${{ github.repository }}/commit/${{ repo.commit }}

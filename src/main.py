@@ -92,9 +92,12 @@ async def handle_discord_interaction(request: Request):
             }
 
             if command_name == "ping":
-                response_data["data"]["content"] = "Pong!"
+                response_data["data"]["content"] = "Pong! 🏓"
             elif command_name == "githubsub":
-                response_data["data"]["content"] = "Subscription command received"
+                response_data["data"]["content"] = (
+                    "GitHub subscription command received!\n"
+                    "This feature is coming soon. Stay tuned! 🚀"
+                )
             elif command_name == "help":
                 response_data["data"]["content"] = (
                     "Available commands:\n"
