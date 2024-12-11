@@ -76,7 +76,7 @@ async def test_handle_discord_interaction_command():
     )
     response = await handle_discord_interaction(mock_request)
     assert response["type"] == 4
-    assert response["data"]["content"] == "Pong!"
+    assert response["data"]["content"] == "Pong! 🏓"
 
 @pytest.mark.asyncio
 async def test_handle_discord_interaction_help():
@@ -98,6 +98,19 @@ async def test_handle_discord_interaction_error():
     )
     response = await handle_discord_interaction(mock_request)
     assert "An error occurred" in response["data"]["content"]
+
+@pytest.mark.asyncio
+async def test_handle_discord_interaction_githubsub():
+    """Test handling githubsub command."""
+    mock_request = MagicMock(
+        json=AsyncMock(return_value={
+            "type": 2,  # APPLICATION_COMMAND type
+            "data": {"name": "githubsub"}
+        })
+    )
+    response = await handle_discord_interaction(mock_request)
+    assert response["type"] == 4
+    assert "GitHub subscription" in response["data"]["content"]
 
 @pytest.mark.asyncio
 async def test_startup_event(mock_bot_instance):
