@@ -36,11 +36,10 @@ async def setup_commands(bot: commands.Bot):
         @bot.tree.command(
             name="githubsub", description="Subscribe to GitHub notifications"
         )
-        async def github_sub(interaction: discord.Interaction):
+        async def githubsub_command(interaction: discord.Interaction):
+            """Subscribe to GitHub notifications."""
             await interaction.response.defer(ephemeral=True)
-            await interaction.followup.send(
-                "GitHub subscription feature coming soon!", ephemeral=True
-            )
+            # The deferred response will be handled by the webhook
 
         logger.info("Commands setup complete")
         return True

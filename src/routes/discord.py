@@ -12,6 +12,17 @@ from src.bot.bot import bot
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+RESPONSE_TYPES = {
+    "PONG": 1,
+    "CHANNEL_MESSAGE": 4,
+    "DEFERRED_CHANNEL_MESSAGE": 5,
+    "DEFERRED_UPDATE_MESSAGE": 6,
+    "UPDATE_MESSAGE": 7,
+    "APPLICATION_COMMAND_AUTOCOMPLETE_RESULT": 8,
+    "MODAL": 9,
+    "PREMIUM_REQUIRED": 10,
+}
+
 
 def get_verify_key():
     """Get the Discord verification key."""
@@ -31,20 +42,24 @@ async def discord_interaction(request: Request) -> Response:
         signature = request.headers.get("X-Signature-Ed25519")
         timestamp = request.headers.get("X-Signature-Timestamp")
 
-        if not signature or not timestamp:
+        if not verify_key or not signature or not timestamp:
+            logger.error("Missing verification requirements")
             return Response(status_code=401)
 
         body = await request.body()
+        body_str = body.decode()
+
         try:
             verify_key.verify(
-                f"{timestamp}{body.decode()}".encode(), bytes.fromhex(signature)
+                f"{timestamp}{body_str}".encode(), bytes.fromhex(signature)
             )
-        except (ValueError, NaclValueError):
+        except Exception as e:
+            logger.error(f"Verification failed: {e}")
             return Response(status_code=401)
 
-        # Parse the request data
-        request_data = json.loads(body)
-        interaction_type = request_data.get("type")
+        # Parse and handle the interaction
+        interaction_data = json.loads(body_str)
+        interaction_type = interaction_data.get("type")
 
         logger.info("Received Discord interaction")
         logger.info(f"Processing interaction type: {interaction_type}")
@@ -56,7 +71,7 @@ async def discord_interaction(request: Request) -> Response:
 
         # Handle APPLICATION_COMMAND
         if interaction_type == InteractionType.application_command.value:
-            command_name = request_data.get("data", {}).get("name")
+            command_name = interaction_data.get("data", {}).get("name")
             logger.info(f"Handling command: {command_name}")
 
             if command_name == "ping":
@@ -110,7 +125,10 @@ async def discord_interaction(request: Request) -> Response:
             elif command_name == "githubsub":
                 return Response(
                     content=json.dumps(
-                        {"type": 5, "data": {"flags": 64}}  # Deferred response
+                        {
+                            "type": RESPONSE_TYPES["DEFERRED_CHANNEL_MESSAGE"],
+                            "data": {"flags": 64},  # Ephemeral flag
+                        }
                     ),
                     media_type="application/json",
                 )

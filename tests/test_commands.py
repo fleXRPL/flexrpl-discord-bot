@@ -95,18 +95,14 @@ async def test_github_sub_command(bot):
 
     await setup_commands(bot)
     
-    github_sub = commands['github_sub']
-    assert github_sub is not None
+    githubsub = commands['githubsub_command']
+    assert githubsub is not None
 
     interaction = AsyncMock()
-    await github_sub(interaction)
+    await githubsub(interaction)
     
-    # Verify command behavior
+    # Verify defer was called with ephemeral=True
     interaction.response.defer.assert_called_once_with(ephemeral=True)
-    interaction.followup.send.assert_called_once_with(
-        "GitHub subscription feature coming soon!",
-        ephemeral=True
-    )
 
 @pytest.mark.asyncio
 async def test_setup_commands_error(bot):
