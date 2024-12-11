@@ -20,11 +20,11 @@ jobs:
       - name: Send Discord notification
         uses: bythope/discord-webhook-messages@v1
         with:
-          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }} # Access the secret here
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           username: GitHub Notifications
           content: |
-            New push to repository: ${{ repo.repository }}
-            Branch: ${{ repo.branch }}
-            Commit: ${{ repo.commit }}
-            Author: ${{ repo.actor }}
-            Link: ${{ github.server_url }}/${{ github.repository }}/commit/${{ repo.commit }}
+            New push to repository: ${{ github.repository }}
+            Branch: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            Link: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
