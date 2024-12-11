@@ -13,7 +13,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const webhookUrl = '${{ secrets.DISCORD_WEBHOOK }}'; // Access the secret directly
+            const webhookUrl = '${{ secrets.DISCORD_WEBHOOK_URL }}'; // Access the secret directly
             if (!webhookUrl) {
               throw new Error('Webhook URL is not set. Please check your GitHub secrets.');
             }
