@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 
 from discord import InteractionType
 from fastapi import APIRouter, Request, Response
@@ -75,53 +76,70 @@ async def discord_interaction(request: Request) -> Response:
             logger.info(f"Handling command: {command_name}")
 
             if command_name == "ping":
-                latency = round(bot.latency * 1000)
+                try:
+                    latency = (
+                        round(bot.latency * 1000) if not math.isnan(bot.latency) else 0
+                    )
+                    message = f"Pong! 🏓 (Latency: {latency}ms)"
+                except (ValueError, TypeError):
+                    message = "Pong! 🏓 (Latency unavailable)"
+
                 return Response(
                     content=json.dumps(
                         {
-                            "type": 4,
-                            "data": {
-                                "content": f"Pong! 🏓 (Latency: {latency}ms)",
-                                "flags": 64,
-                            },
+                            "type": RESPONSE_TYPES["CHANNEL_MESSAGE"],
+                            "data": {"content": message, "flags": 64},
                         }
                     ),
                     media_type="application/json",
                 )
             elif command_name == "help":
-                commands = bot.tree.get_commands()
-                logger.info(f"Found {len(commands)} commands")
-                if not commands:
-                    logger.warning("No commands found in bot.tree")
+                try:
+                    commands = list(bot.tree.get_commands())
+                    logger.info(f"Found {len(commands)} commands")
+
+                    # Fallback to bot's command list if tree is empty
+                    if not commands:
+                        commands = [
+                            {"name": "ping", "description": "Check bot latency"},
+                            {"name": "help", "description": "Show available commands"},
+                            {
+                                "name": "githubsub",
+                                "description": "Subscribe to GitHub notifications",
+                            },
+                        ]
+
+                    commands_list = [
+                        f"`/{cmd['name']}` - {cmd['description']}" for cmd in commands
+                    ]
+
                     return Response(
                         content=json.dumps(
                             {
-                                "type": 4,
+                                "type": RESPONSE_TYPES["CHANNEL_MESSAGE"],
                                 "data": {
-                                    "content": "❌ No commands are currently available.",
+                                    "content": "**Available Commands:**\n"
+                                    + "\n".join(commands_list),
                                     "flags": 64,
                                 },
                             }
                         ),
                         media_type="application/json",
                     )
-
-                commands_list = [
-                    f"`/{cmd.name}` - {cmd.description}" for cmd in commands
-                ]
-                return Response(
-                    content=json.dumps(
-                        {
-                            "type": 4,
-                            "data": {
-                                "content": "**Available Commands:**\n"
-                                + "\n".join(commands_list),
-                                "flags": 64,
-                            },
-                        }
-                    ),
-                    media_type="application/json",
-                )
+                except Exception as e:
+                    logger.error(f"Error getting commands: {e}")
+                    return Response(
+                        content=json.dumps(
+                            {
+                                "type": RESPONSE_TYPES["CHANNEL_MESSAGE"],
+                                "data": {
+                                    "content": "❌ Error retrieving commands.",
+                                    "flags": 64,
+                                },
+                            }
+                        ),
+                        media_type="application/json",
+                    )
             elif command_name == "githubsub":
                 return Response(
                     content=json.dumps(
