@@ -4,7 +4,8 @@ from nacl.signing import SigningKey
 import json
 from src.routes.discord import router, get_verify_key
 from fastapi import FastAPI
-from config import config  # Import the config module
+from config import config
+from discord import InteractionType, InteractionResponseType
 
 # Create a test app and add the router
 app = FastAPI()
@@ -34,9 +35,9 @@ def command_payload():
     mock_application_id = "1313573192371273788"  # Mock application ID
     
     return json.dumps({
-        "type": 2,  # APPLICATION_COMMAND
+        "type": InteractionType.application_command.value,
         "id": "123456789",  # Test ID can be mock value
-        "application_id": mock_application_id,  # Use mock application ID instead of config
+        "application_id": mock_application_id,
         "channel_id": "987654321",  # Test ID can be mock value
         "guild_id": mock_guild_id,
         "data": {
@@ -96,30 +97,35 @@ def test_missing_headers(ping_payload):
     
     assert response.status_code == 401
 
-def test_command_interaction(command_payload, monkeypatch):
+@pytest.mark.asyncio
+async def test_command_interaction(command_payload, monkeypatch):
     """Test handling of Discord command interaction."""
     # Mock the verify key
     monkeypatch.setattr("src.routes.discord.get_verify_key", lambda: verify_key)
-    
+
     # Create a test payload with a specific command
     payload = json.loads(command_payload)
+    payload["type"] = InteractionType.application_command.value
     payload["data"] = {"name": "githubsub", "options": [{"name": "repository", "value": "owner/repo"}]}
     command_payload = json.dumps(payload)
-    
+
     headers = create_signed_headers(command_payload)
     response = client.post(
         "/discord-interaction",
         headers=headers,
         content=command_payload
     )
-    
+
     assert response.status_code == 200
     response_data = response.json()
-    
+
     # Check response based on command type
     command_name = payload["data"]["name"]
     if command_name == "githubsub":
-        assert response_data == {"type": 5, "data": {"flags": 64}}  # Deferred response
+        assert response_data == {
+            "type": 5,  # Use the raw value instead of enum
+            "data": {"flags": 64}
+        }
     elif command_name == "ping":
         assert response_data["type"] == 4  # Immediate response
         assert "Pong!" in response_data["data"]["content"]
