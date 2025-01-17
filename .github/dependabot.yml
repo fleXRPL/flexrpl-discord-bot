@@ -29,6 +29,12 @@ updates:
     commit-message:
       prefix: "docker"
       include: "scope"
+    ignore:
+      - dependency-name: "python"
+        versions: ["3.13.x", "4.x"]  # Ignore pre-release and major versions
+    allow:
+      - dependency-name: "python"
+        dependency-type: "direct"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
